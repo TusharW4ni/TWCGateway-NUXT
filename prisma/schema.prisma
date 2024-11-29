@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,17 +8,70 @@ datasource db {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  posts Post[]
+  id                 Int                 @id @default(autoincrement())
+  email              String              @unique
+  firstName          String?
+  lastName           String?
+  role               String
+  OnboardingEmployee OnboardingEmployee?
+  archived           Boolean             @default(false)
+
+  @@map("user")
 }
 
-model Post {
-  id        Int     @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean @default(false)
-  author    User    @relation(fields: [authorId], references: [id])
-  authorId  Int
+model OnboardingEmployee {
+  id             Int              @id @default(autoincrement())
+  User           User             @relation(fields: [userId], references: [id])
+  userId         Int              @unique
+  Department     Department       @relation(fields: [departmentId], references: [id])
+  departmentId   Int
+  TaskAssignment TaskAssignment[]
+  archived       Boolean          @default(false)
+
+  @@map("onboardingEmployee")
+}
+
+model Department {
+  id                  Int                  @id @default(autoincrement())
+  name                String               @unique
+  Tasks               Task[]
+  Location            Location?            @relation(fields: [locationId], references: [id])
+  locationId          Int?
+  OnboardingEmployees OnboardingEmployee[]
+  archived            Boolean              @default(false)
+
+  @@map("department")
+}
+
+model Location {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  Departments Department[]
+  archived    Boolean      @default(false)
+
+  @@map("location")
+}
+
+model Task {
+  id             Int              @id @default(autoincrement())
+  description    String
+  Department     Department       @relation(fields: [departmentId], references: [id])
+  departmentId   Int
+  TaskAssignment TaskAssignment[]
+  archived       Boolean          @default(false)
+
+  @@map("task")
+}
+
+model TaskAssignment {
+  id                   Int                @id @default(autoincrement())
+  Task                 Task               @relation(fields: [taskId], references: [id])
+  taskId               Int
+  OnboardingEmployee   OnboardingEmployee @relation(fields: [onboardingEmployeeId], references: [id])
+  onboardingEmployeeId Int
+  completed            Boolean            @default(false)
+  completedOn          DateTime?
+  archived             Boolean            @default(false)
+
+  @@map("taskAssignment")
 }
