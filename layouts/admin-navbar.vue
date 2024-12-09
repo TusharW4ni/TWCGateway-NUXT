@@ -17,7 +17,11 @@ function navigate(path: string) {
   <div class="flex-col md:flex md:flex-row">
     <div class="md:flex-col md:h-screen md:w-20 flex bg-gray-900 h-16">
       <div class="flex flex-grow justify-center items-center md:items-start">
-        <img src="/assets/TWCGatewayLogo.svg" class="p-1" draggable="false" />
+        <img
+          src="/assets/img/TWCGatewayLogo.svg"
+          class="p-1"
+          draggable="false"
+        />
       </div>
       <div
         class="flex flex-grow md:flex-col w-full justify-center items-center space-x-2 md:space-x-0 md:space-y-2 overflow-auto"
