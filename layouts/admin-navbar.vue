@@ -44,6 +44,6 @@ function navigate(path: string) {
         </button>
       </div>
     </div>
-    <div>asdfdsaf</div>
+    <div><slot /></div>
   </div>
 </template>
