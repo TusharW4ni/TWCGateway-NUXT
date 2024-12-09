@@ -1,19 +1,4 @@
-<script setup lang="ts">
-import {
-  UsersIcon,
-  ClipboardDocumentListIcon,
-  ArrowLeftStartOnRectangleIcon,
-  UserPlusIcon,
-} from "@heroicons/vue/24/solid";
-
-async function logout() {
-  window.location.href = "/api/auth0/logout";
-}
-
-function navigate(path: string) {
-  navigateTo(path);
-}
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <NuxtLayout name="admin-navbar">
