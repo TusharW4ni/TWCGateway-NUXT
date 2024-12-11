@@ -4,6 +4,50 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
 } from "@heroicons/vue/24/solid";
+import Table from "~/components/Table.vue";
+
+const headers = ["ID", "First Name", "Last Name", "Email"];
+const rows = [
+  {
+    id: 1,
+    firstName: "John",
+    lastName: "Doe",
+    email: "johndoe@gmail.com",
+  },
+  {
+    id: 2,
+    firstName: "Jane",
+    lastName: "Doe",
+    email: "janedoe@gmail.com",
+  },
+  {
+    id: 3,
+    firstName: "Admin",
+    lastName: "",
+    email: "admin@gmail.com",
+  },
+];
+
+// Mapping between headers and row keys
+const headerKeyMap: { [key: string]: keyof (typeof rows)[0] } = {
+  ID: "id",
+  "First Name": "firstName",
+  "Last Name": "lastName",
+  Email: "email",
+};
+
+interface TransformedRow {
+  [key: string]: any;
+}
+
+// Transform rows to match the headers
+const transformedRows = rows.map((row) => {
+  const transformedRow: TransformedRow = {};
+  for (const header of headers) {
+    transformedRow[header] = row[headerKeyMap[header]];
+  }
+  return transformedRow;
+});
 </script>
 
 <template>
@@ -22,66 +66,9 @@ import {
         <div
           class="border w-1/2 border-gray-300 m-3 p-3 rounded-lg overflow-auto"
         >
-          <details class="p-3 group">
-            <summary
-              class="bg-twc-yellow text-black p-3 list-none flex items-center"
-            >
-              <span class="group-open:hidden">
-                <ChevronDownIcon class="w-6" />
-              </span>
-              <span class="hidden group-open:inline">
-                <ChevronUpIcon class="w-6" />
-              </span>
-              <span class="ml-2">Onboarding Employees</span>
-            </summary>
-            <div class="bg-[#fcf4c3] rounded-b-lg text-black p-3">
-              <ul>
-                <li>user1</li>
-                <li>user2</li>
-                <li>user3</li>
-              </ul>
-            </div>
-          </details>
-          <details class="p-3 group">
-            <summary
-              class="bg-twc-yellow text-black p-3 list-none flex items-center"
-            >
-              <span class="group-open:hidden">
-                <ChevronDownIcon class="w-6" />
-              </span>
-              <span class="hidden group-open:inline">
-                <ChevronUpIcon class="w-6" />
-              </span>
-              <span class="ml-2">Supervisors</span>
-            </summary>
-            <div class="bg-[#fcf4c3] rounded-b-lg text-black p-3">
-              <ul>
-                <li>user1</li>
-                <li>user2</li>
-                <li>user3</li>
-              </ul>
-            </div>
-          </details>
-          <details class="p-3 group">
-            <summary
-              class="bg-twc-yellow text-black p-3 list-none flex items-center"
-            >
-              <span class="group-open:hidden">
-                <ChevronDownIcon class="w-6" />
-              </span>
-              <span class="hidden group-open:inline">
-                <ChevronUpIcon class="w-6" />
-              </span>
-              <span class="ml-2">Admins</span>
-            </summary>
-            <div class="bg-[#fcf4c3] rounded-b-lg text-black p-3">
-              <ul>
-                <li>user1</li>
-                <li>user2</li>
-                <li>user3</li>
-              </ul>
-            </div>
-          </details>
+          <Details summary="Admins">
+            <Table :headers="headers" :rows="transformedRows" />
+          </Details>
         </div>
         <div
           class="border w-1/2 border-gray-300 m-3 p-3 rounded-lg overflow-auto"
