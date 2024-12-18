@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type { User } from "@prisma/client";
-import { UserPlusIcon } from "@heroicons/vue/24/solid";
+import { ref } from "vue";
 import Table from "~/components/Table.vue";
 
 const headers = ["First Name", "Last Name", "Email"];
 const admins = await useFetch("/api/user/get/admins");
-const rows = admins.data.value;
+const rows = ref(admins.data.value || []);
 
 const headerKeyMap = {
   "First Name": "firstName",
@@ -13,14 +13,12 @@ const headerKeyMap = {
   Email: "email",
 };
 
-const showSecondaryPane = ref(true);
-const showAddUserForm = ref(false);
-
-function enableAddUserForm() {
-  showAddUserForm.value = true;
+function addNewRow(newRow) {
+  rows.value.push(newRow);
 }
-function disableAddUserForm() {
-  showAddUserForm.value = false;
+
+function cancelAddingRow() {
+  // Logic if needed when a row addition is canceled
 }
 </script>
 
@@ -35,7 +33,12 @@ function disableAddUserForm() {
     </div>
     <div>
       <Details summary="Admins">
-        <Table :headers="headers" :rows="rows" :headerKeyMap="headerKeyMap" />
+        <Table
+          :headers="headers"
+          :rows="rows"
+          :headerKeyMap="headerKeyMap"
+          @save="addNewRow"
+        />
       </Details>
     </div>
   </NuxtLayout>
