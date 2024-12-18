@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import type { User } from "@prisma/client";
-import { ref } from "vue";
-import Table from "~/components/Table.vue";
+import { ref, watch } from "vue";
 
 const headers = ["First Name", "Last Name", "Email"];
 const admins = await useFetch("/api/user/get/admins");
-const rows = ref(admins.data.value || []);
+const rows = ref<User[]>(admins.data.value || []);
 
 const headerKeyMap = {
   "First Name": "firstName",
@@ -13,12 +12,14 @@ const headerKeyMap = {
   Email: "email",
 };
 
-function addNewRow(newRow) {
-  rows.value.push(newRow);
-}
-
-function cancelAddingRow() {
-  // Logic if needed when a row addition is canceled
+function refreshUsers() {
+  admins.refresh();
+  watch(
+    () => admins.data.value,
+    (newValue) => {
+      rows.value = newValue || [];
+    }
+  );
 }
 </script>
 
@@ -31,13 +32,14 @@ function cancelAddingRow() {
         Users
       </h1>
     </div>
-    <div>
-      <Details summary="Admins">
-        <Table
+    <div class="md:flex md:justify-center">
+      <Details summary="Admins" class="md:w-1/2">
+        <UsersTable
           :headers="headers"
           :rows="rows"
           :headerKeyMap="headerKeyMap"
-          @save="addNewRow"
+          :type="'Admin'"
+          @save="refreshUsers"
         />
       </Details>
     </div>

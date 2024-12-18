@@ -13,7 +13,7 @@ const props = defineProps({
 </script>
 
 <template>
-  <details class="p-3 group">
+  <details class="p-3 group" open="true">
     <summary class="bg-twc-yellow text-black p-3 list-none flex items-center">
       <span class="group-open:hidden">
         <ChevronDownIcon class="w-6" />
