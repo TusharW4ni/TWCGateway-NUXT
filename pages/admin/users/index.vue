@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import type { User } from "@prisma/client";
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 
 const headers = ["First Name", "Last Name", "Email"];
-const admins = await useFetch("/api/user/get/admins");
-const rows = ref<User[]>(admins.data.value || []);
+const pageSize = ref(3);
+const currentPage = ref(1);
+const totalPages = ref(1);
+const rows = ref<User[]>([]);
 
 const headerKeyMap = {
   "First Name": "firstName",
@@ -12,14 +14,32 @@ const headerKeyMap = {
   Email: "email",
 };
 
-function refreshUsers() {
-  admins.refresh();
-  watch(
-    () => admins.data.value,
-    (newValue) => {
-      rows.value = newValue || [];
-    }
-  );
+const fetchAdmins = async () => {
+  const response = await $fetch(`/api/user/get/admins`, {
+    method: "GET",
+    query: {
+      page: currentPage.value,
+      pageSize: pageSize.value,
+    },
+  });
+
+  rows.value = response.admins || [];
+  totalPages.value = response.totalPages;
+};
+
+// Fetch admins when the component is mounted and whenever `currentPage` changes
+watch([currentPage, pageSize], fetchAdmins, { immediate: true });
+
+function nextPage() {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value += 1;
+  }
+}
+
+function prevPage() {
+  if (currentPage.value > 1) {
+    currentPage.value -= 1;
+  }
 }
 </script>
 
@@ -39,7 +59,11 @@ function refreshUsers() {
           :rows="rows"
           :headerKeyMap="headerKeyMap"
           :type="'Admin'"
-          @save="refreshUsers"
+          @save="fetchAdmins"
+          :currentPage="currentPage"
+          :totalPages="totalPages"
+          @nextPage="nextPage"
+          @prevPage="prevPage"
         />
       </Details>
     </div>

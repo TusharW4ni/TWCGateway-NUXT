@@ -1,4 +1,3 @@
-<!-- TODO: make the add user button a row with a centered plus button. -->
 <script setup lang="ts">
 import {
   UserPlusIcon,
@@ -44,13 +43,15 @@ const props = defineProps<{
   rows: Row[];
   headerKeyMap?: Record<string, string>;
   type: String;
+  currentPage: number;
+  totalPages: number;
 }>();
 
 const headerKeyMap = props.headerKeyMap || {};
 const isAddingRow = ref(false);
 const newRow = ref<Row | null>(null);
 
-const emits = defineEmits(["save"]);
+const emits = defineEmits(["save", "nextPage", "prevPage"]);
 
 function startAddingRow() {
   isAddingRow.value = true;
@@ -114,21 +115,43 @@ async function saveNewRow() {
     newRow.value = null;
   }
 }
+
+const disableNextPage = computed(() => props.currentPage >= props.totalPages);
+const disablePrevPage = computed(() => props.currentPage <= 1);
+
+function nextPage() {
+  if (!disableNextPage.value) {
+    emits("nextPage");
+  }
+}
+
+function prevPage() {
+  if (!disablePrevPage.value) {
+    emits("prevPage");
+  }
+}
 </script>
 
 <template>
   <div class="relative">
+    <!--Pagination Bar -->
     <div
       class="border-2 rounded-lg border-gray-300 overflow-auto mb-1 flex justify-center items-center bg-white"
     >
       <button
-        class="border-2 border-gray-300 rounded text-gray-300 bg-gray-100 hover:text-black hover:border-black hover:bg-white flex justify-center items-center p-2 m-2"
+        class="border-2 border-gray-300 rounded text-gray-300 bg-gray-100 hover:text-black hover:border-black hover:bg-white flex justify-center items-center p-2 m-2 disabled:cursor-not-allowed disabled:hover:text-gray-300 disabled:hover:border-gray-300 disabled:hover:bg-gray-100"
+        @click="prevPage"
+        :disabled="disablePrevPage"
       >
         <ChevronLeftIcon class="h-5 w-5" />
       </button>
-      <span class="rounded p-2 m-2 bg-gray-100 text-black"> 1/1 </span>
+      <span class="rounded p-2 m-2 bg-gray-100 text-black">
+        {{ props.currentPage }}/{{ props.totalPages }}
+      </span>
       <button
-        class="border-2 border-gray-300 rounded text-gray-300 bg-gray-100 hover:text-black hover:border-black hover:bg-white flex justify-center items-center p-2 m-2"
+        class="border-2 border-gray-300 rounded text-gray-300 bg-gray-100 hover:text-black hover:border-black hover:bg-white flex justify-center items-center p-2 m-2 disabled:cursor-not-allowed disabled:hover:text-gray-300 disabled:hover:border-gray-300 disabled:hover:bg-gray-100"
+        @click="nextPage"
+        :disabled="disableNextPage"
       >
         <ChevronRightIcon class="h-5 w-5" />
       </button>
@@ -140,7 +163,7 @@ async function saveNewRow() {
             <th v-if="!isAddingRow"></th>
             <th v-if="isAddingRow"></th>
             <th
-              v-for="header in headers"
+              v-for="header in props.headers"
               :key="header"
               class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
@@ -153,7 +176,7 @@ async function saveNewRow() {
         <tbody class="bg-white divide-y divide-gray-200">
           <!--Data Row -->
           <tr
-            v-for="row in rows"
+            v-for="row in props.rows"
             :key="row.id || row.email || JSON.stringify(row)"
           >
             <td
@@ -166,7 +189,7 @@ async function saveNewRow() {
             </td>
             <td v-if="isAddingRow"></td>
             <td
-              v-for="header in headers"
+              v-for="header in props.headers"
               :key="header"
               class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
             >
@@ -183,7 +206,7 @@ async function saveNewRow() {
             </td>
           </tr>
           <!--Add Admin Row -->
-          <tr v-if="isAddingRow && type === 'Admin'">
+          <tr v-if="isAddingRow && props.type === 'Admin'">
             <td class="px-6 py-4">
               <button
                 @click="cancelAddingRow"
@@ -193,7 +216,7 @@ async function saveNewRow() {
               </button>
             </td>
             <td
-              v-for="header in headers"
+              v-for="header in props.headers"
               :key="header"
               class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
             >
@@ -217,7 +240,7 @@ async function saveNewRow() {
       </table>
     </div>
     <button
-      v-if="!isAddingRow && type === 'Admin'"
+      v-if="!isAddingRow && props.type === 'Admin'"
       @click="startAddingRow"
       class="w-full mt-1 p-1 border-2 border-gray-300 rounded text-gray-300 bg-gray-100 hover:text-black hover:border-black hover:bg-white focus:outline-none focus:text-black focus:border-black focus:bg-white flex justify-center items-center"
     >
