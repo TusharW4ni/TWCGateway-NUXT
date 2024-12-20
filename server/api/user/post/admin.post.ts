@@ -9,10 +9,10 @@ export default defineEventHandler(async (event) => {
         role: "Admin",
       },
     });
+    setResponseStatus(event, 201);
+    return { message: "Admin created successfully" };
   } catch (error) {
-    setResponseStatus(event, 400);
+    setResponseStatus(event, 500);
     return { error: error };
   }
-  setResponseStatus(event, 201);
-  return { message: "Admin created successfully" };
 });

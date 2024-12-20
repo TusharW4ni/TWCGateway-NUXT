@@ -63,6 +63,8 @@ function prevPage() {
           :totalPages="totalPages"
           @nextPage="nextPage"
           @prevPage="prevPage"
+          @update="fetchAdmins"
+          @refresh="fetchAdmins"
         />
       </Details>
     </div>

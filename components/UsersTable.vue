@@ -1,3 +1,4 @@
+<!-- TODO: Need to add loading and no data available states to the table -->
 <script setup lang="ts">
 import {
   UserPlusIcon,
@@ -54,7 +55,13 @@ const newRow = ref<Row | null>(null);
 const isEditingRow = ref(false);
 const editingRow = ref<Row | null>(null);
 
-const emits = defineEmits(["save", "nextPage", "prevPage"]);
+const emits = defineEmits([
+  "save",
+  "update",
+  "nextPage",
+  "prevPage",
+  "refresh",
+]);
 
 function startAddingRow() {
   isAddingRow.value = true;
@@ -72,9 +79,53 @@ function cancelEditingRow() {
   editingRow.value = null;
 }
 
-function saveEditedRow() {
+async function saveEditedRow() {
   if (editingRow.value) {
     console.log({ editingRow: editingRow.value });
+    let firstName = editingRow.value.firstName;
+    let lastName = editingRow.value.lastName;
+    let email = editingRow.value.email;
+
+    if (!firstName || !lastName || !email) {
+      notify_error("All fields are required.");
+      return;
+    }
+
+    firstName = editingRow.value.firstName.trim();
+    lastName = editingRow.value.lastName.trim();
+    email = editingRow.value.email;
+
+    if (/\s/.test(firstName) || /\s/.test(lastName)) {
+      notify_error("First name and last name should not contain spaces.");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      notify_error("Please enter a valid email address.");
+      return;
+    }
+
+    try {
+      const res = await $fetch("/api/user/put/admin", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: {
+          id: editingRow.value.id,
+          firstName,
+          lastName,
+          email,
+        },
+      });
+      console.log({ res });
+      emits("update");
+      notify_success("User updated successfully!");
+    } catch (e) {
+      emits("refresh");
+      notify_error("An error occurred while updating the user.");
+      console.error(e);
+    }
     isEditingRow.value = false;
     editingRow.value = null;
   }
@@ -131,6 +182,7 @@ async function saveNewRow() {
       emits("save");
       notify_success("User added successfully!");
     } catch (e) {
+      notify_error("An error occurred while adding the user.");
       console.error(e);
     }
     isAddingRow.value = false;
@@ -154,8 +206,9 @@ function prevPage() {
 }
 
 function handleKeydown(event: KeyboardEvent) {
-  if (isEditingRow.value && event.key === "Escape") {
+  if ((isEditingRow.value || isAddingRow.value) && event.key === "Escape") {
     cancelEditingRow();
+    cancelAddingRow();
   }
 }
 
