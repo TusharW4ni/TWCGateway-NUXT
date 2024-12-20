@@ -51,11 +51,33 @@ const headerKeyMap = props.headerKeyMap || {};
 const isAddingRow = ref(false);
 const newRow = ref<Row | null>(null);
 
+const isEditingRow = ref(false);
+const editingRow = ref<Row | null>(null);
+
 const emits = defineEmits(["save", "nextPage", "prevPage"]);
 
 function startAddingRow() {
   isAddingRow.value = true;
   newRow.value = {};
+}
+
+function startEditingRow(row: Row) {
+  console.log({ row });
+  isEditingRow.value = true;
+  editingRow.value = row;
+}
+
+function cancelEditingRow() {
+  isEditingRow.value = false;
+  editingRow.value = null;
+}
+
+function saveEditedRow() {
+  if (editingRow.value) {
+    console.log({ editingRow: editingRow.value });
+    isEditingRow.value = false;
+    editingRow.value = null;
+  }
 }
 
 function cancelAddingRow() {
@@ -130,6 +152,20 @@ function prevPage() {
     emits("prevPage");
   }
 }
+
+function handleKeydown(event: KeyboardEvent) {
+  if (isEditingRow.value && event.key === "Escape") {
+    cancelEditingRow();
+  }
+}
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeydown);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleKeydown);
+});
 </script>
 
 <template>
@@ -183,12 +219,36 @@ function prevPage() {
               class="flex justify-center items-center py-4"
               v-if="!isAddingRow"
             >
-              <button class="p-2">
+              <button
+                v-if="!isEditingRow"
+                class="p-2"
+                @click="startEditingRow(row)"
+              >
                 <PencilSquareIcon class="h-5 w-5 hover:text-twc-blue" />
+              </button>
+              <button
+                v-if="isEditingRow && editingRow.id === row.id"
+                class="text-red-500 border-2 border-red-500 bg-red-100 p-2 rounded focus:outline-none focus:bg-red-200 hover:bg-red-200"
+                @click="cancelEditingRow"
+              >
+                <XMarkIcon class="h-5 w-5 hover:text-red-500" />
               </button>
             </td>
             <td v-if="isAddingRow"></td>
             <td
+              v-if="isEditingRow && editingRow.id === row.id"
+              v-for="header in props.headers"
+              :key="header"
+            >
+              <input
+                v-model="editingRow[headerKeyMap[header] || header]"
+                class="w-full outline-none border-0 bg-gray-200 rounded p-2 focus:bg-white focus:ring-2 focus:ring-twc-purple"
+                type="text"
+                :placeholder="header"
+              />
+            </td>
+            <td
+              v-if="!isEditingRow || editingRow.id !== row.id"
               v-for="header in props.headers"
               :key="header"
               class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
@@ -200,8 +260,15 @@ function prevPage() {
               class="flex justify-center items-center py-4"
               v-if="!isAddingRow"
             >
-              <button class="p-2">
+              <button v-if="!isEditingRow" class="p-2">
                 <TrashIcon class="h-5 w-5 hover:text-red-500" />
+              </button>
+              <button
+                v-if="isEditingRow && editingRow.id === row.id"
+                class="text-green-500 border-2 border-green-500 bg-green-100 p-2 rounded focus:outline-none focus:bg-green-200 hover:bg-green-200"
+                @click="saveEditedRow"
+              >
+                <CheckIcon class="h-5 w-5 hover:text-green-500" />
               </button>
             </td>
           </tr>
