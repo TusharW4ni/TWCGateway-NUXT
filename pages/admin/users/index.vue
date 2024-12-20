@@ -33,7 +33,7 @@ function refreshUsers() {
       </h1>
     </div>
     <div class="md:flex md:justify-center">
-      <Details summary="Admins" class="md:w-1/2">
+      <Details summary="Admins" class="md:w-3/4">
         <UsersTable
           :headers="headers"
           :rows="rows"

@@ -1,13 +1,15 @@
+<!-- TODO: make the add user button a row with a centered plus button. -->
 <script setup lang="ts">
-import { UserPlusIcon, XMarkIcon, CheckIcon } from "@heroicons/vue/24/solid";
-
+import {
+  UserPlusIcon,
+  XMarkIcon,
+  CheckIcon,
+  PencilSquareIcon,
+  TrashIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "@heroicons/vue/24/solid";
 import { toast, type ToastOptions } from "vue3-toastify";
-// const notify = () => {
-//   toast("Hello World 12345", {
-//     autoClose: 5000,
-//     position: toast.POSITION.TOP_CENTER,
-//   } as ToastOptions);
-// };
 
 function notify_success(message: string) {
   toast(message, {
@@ -116,17 +118,26 @@ async function saveNewRow() {
 
 <template>
   <div class="relative">
-    <button
-      v-if="!isAddingRow && type === 'Admin'"
-      @click="startAddingRow"
-      class="mb-4 p-2 border-2 border-gray-300 rounded text-gray-300 bg-gray-100 hover:text-black hover:border-black hover:bg-white focus:outline-none focus:text-black focus:border-black focus:bg-white"
+    <div
+      class="border-2 rounded-lg border-gray-300 overflow-auto mb-1 flex justify-center items-center bg-white"
     >
-      <UserPlusIcon class="h-5 w-5" />
-    </button>
+      <button
+        class="border-2 border-gray-300 rounded text-gray-300 bg-gray-100 hover:text-black hover:border-black hover:bg-white flex justify-center items-center p-2 m-2"
+      >
+        <ChevronLeftIcon class="h-5 w-5" />
+      </button>
+      <span class="rounded p-2 m-2 bg-gray-100 text-black"> 1/1 </span>
+      <button
+        class="border-2 border-gray-300 rounded text-gray-300 bg-gray-100 hover:text-black hover:border-black hover:bg-white flex justify-center items-center p-2 m-2"
+      >
+        <ChevronRightIcon class="h-5 w-5" />
+      </button>
+    </div>
     <div class="border-2 rounded-lg border-gray-300 shadow-lg overflow-auto">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
+            <th v-if="!isAddingRow"></th>
             <th v-if="isAddingRow"></th>
             <th
               v-for="header in headers"
@@ -136,13 +147,23 @@ async function saveNewRow() {
               {{ header }}
             </th>
             <th v-if="isAddingRow"></th>
+            <th v-if="!isAddingRow"></th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
+          <!--Data Row -->
           <tr
             v-for="row in rows"
             :key="row.id || row.email || JSON.stringify(row)"
           >
+            <td
+              class="flex justify-center items-center py-4"
+              v-if="!isAddingRow"
+            >
+              <button class="p-2">
+                <PencilSquareIcon class="h-5 w-5 hover:text-twc-blue" />
+              </button>
+            </td>
             <td v-if="isAddingRow"></td>
             <td
               v-for="header in headers"
@@ -152,7 +173,16 @@ async function saveNewRow() {
               {{ row[headerKeyMap[header] || header] }}
             </td>
             <td v-if="isAddingRow"></td>
+            <td
+              class="flex justify-center items-center py-4"
+              v-if="!isAddingRow"
+            >
+              <button class="p-2">
+                <TrashIcon class="h-5 w-5 hover:text-red-500" />
+              </button>
+            </td>
           </tr>
+          <!--Add Admin Row -->
           <tr v-if="isAddingRow && type === 'Admin'">
             <td class="px-6 py-4">
               <button
@@ -169,7 +199,7 @@ async function saveNewRow() {
             >
               <input
                 v-model="newRow[headerKeyMap[header] || header]"
-                class="outline-none border-0 bg-gray-200 rounded p-2 focus:bg-white focus:ring-2 focus:ring-twc-purple"
+                class="w-full outline-none border-0 bg-gray-200 rounded p-2 focus:bg-white focus:ring-2 focus:ring-twc-purple"
                 type="text"
                 :placeholder="header"
               />
@@ -186,5 +216,12 @@ async function saveNewRow() {
         </tbody>
       </table>
     </div>
+    <button
+      v-if="!isAddingRow && type === 'Admin'"
+      @click="startAddingRow"
+      class="w-full mt-1 p-1 border-2 border-gray-300 rounded text-gray-300 bg-gray-100 hover:text-black hover:border-black hover:bg-white focus:outline-none focus:text-black focus:border-black focus:bg-white flex justify-center items-center"
+    >
+      <UserPlusIcon class="h-5 w-5" />
+    </button>
   </div>
 </template>
