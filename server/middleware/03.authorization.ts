@@ -18,6 +18,9 @@ export default defineEventHandler(async (event) => {
       },
     });
     console.log("Users from authorization middleware: \n", user);
+    setCookie(event, "currentUser", JSON.stringify(user), {
+      maxAge: 60 * 60 * 24 * 5,
+    });
     if (!user) {
       sendRedirect(event, logoutRedirectUrl(token));
     } else {

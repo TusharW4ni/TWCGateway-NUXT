@@ -166,6 +166,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", handleKeydown);
 });
+
+const currentUser = useCookie("currentUser");
 </script>
 
 <template>
@@ -220,7 +222,7 @@ onBeforeUnmount(() => {
               v-if="!isAddingRow"
             >
               <button
-                v-if="!isEditingRow"
+                v-if="!isEditingRow && currentUser.email !== row.email"
                 class="p-2"
                 @click="startEditingRow(row)"
               >
@@ -260,7 +262,10 @@ onBeforeUnmount(() => {
               class="flex justify-center items-center py-4"
               v-if="!isAddingRow"
             >
-              <button v-if="!isEditingRow" class="p-2">
+              <button
+                v-if="!isEditingRow && currentUser.email !== row.email"
+                class="p-2"
+              >
                 <TrashIcon class="h-5 w-5 hover:text-red-500" />
               </button>
               <button

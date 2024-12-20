@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { User } from "@prisma/client";
-import { ref, watch, computed } from "vue";
 
 const headers = ["First Name", "Last Name", "Email"];
 const pageSize = ref(3);
