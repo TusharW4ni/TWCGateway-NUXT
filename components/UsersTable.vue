@@ -106,7 +106,7 @@ async function saveEditedRow() {
     }
 
     try {
-      const res = await $fetch("/api/user/put/admin", {
+      const res = await $fetch("/api/users/put/admin", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -167,7 +167,7 @@ async function saveNewRow() {
     }
 
     try {
-      const res = await $fetch("/api/user/post/admin", {
+      const res = await $fetch("/api/users/post/admin", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -365,7 +365,7 @@ const currentUser = useCookie("currentUser");
       </table>
     </div>
     <button
-      v-if="!isAddingRow && props.type === 'Admin'"
+      v-if="!isAddingRow && !editingRow && props.type === 'Admin'"
       @click="startAddingRow"
       class="w-full mt-1 p-1 border-2 border-gray-300 rounded text-gray-300 bg-gray-100 hover:text-black hover:border-black hover:bg-white focus:outline-none focus:text-black focus:border-black focus:bg-white flex justify-center items-center"
     >

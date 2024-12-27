@@ -14,7 +14,7 @@ const headerKeyMap = {
 };
 
 const fetchAdmins = async () => {
-  const response = await $fetch(`/api/user/get/admins`, {
+  const response = await $fetch(`/api/users/get/admins`, {
     method: "GET",
     query: {
       page: currentPage.value,

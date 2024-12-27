@@ -3,6 +3,7 @@ import {
   UsersIcon,
   ClipboardDocumentListIcon,
   ArrowLeftStartOnRectangleIcon,
+  BuildingOffice2Icon,
 } from "@heroicons/vue/24/solid";
 
 async function logout() {
@@ -16,11 +17,14 @@ function navigate(path: string) {
 <template>
   <div class="flex-col md:flex md:flex-row">
     <div class="md:flex-col md:h-screen md:w-20 flex bg-gray-900 h-16">
-      <div class="flex flex-grow justify-center items-center md:items-start">
+      <div
+        class="flex flex-grow justify-center items-center md:items-start p-2"
+      >
         <img
           src="/assets/img/TWCGatewayLogo.svg"
           class="p-1"
           draggable="false"
+          alt="Logo"
         />
       </div>
       <div
@@ -33,10 +37,10 @@ function navigate(path: string) {
           <UsersIcon class="w-8" />
         </button>
         <button
-          @click="navigate('/admin/tasks')"
+          @click="navigate('/admin/departments')"
           class="flex justify-center items-center p-1 border border-gray-300 rounded hover:bg-opacity-50 hover:bg-gray-100"
         >
-          <ClipboardDocumentListIcon class="w-8" />
+          <BuildingOffice2Icon class="w-8" />
         </button>
       </div>
       <div class="flex flex-grow justify-center items-center md:items-end p-2">
