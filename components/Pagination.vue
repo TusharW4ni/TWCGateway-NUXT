@@ -44,7 +44,6 @@ function prevPage() {
       <ChevronLeftIcon class="w-5" />
     </button>
 
-    <!-- Added a fixed width to prevent content shifting -->
     <div class="flex justify-center items-center bg-gray-100 p-2 rounded w-20">
       <span v-if="!loading">
         {{ props.currentPage }}/{{ props.totalPages }}
