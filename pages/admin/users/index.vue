@@ -7,6 +7,8 @@ const currentPage = ref(1);
 const totalPages = ref(1);
 const rows = ref<User[]>([]);
 
+const loading = ref(false);
+
 const headerKeyMap = {
   "First Name": "firstName",
   "Last Name": "lastName",
@@ -14,6 +16,7 @@ const headerKeyMap = {
 };
 
 const fetchAdmins = async () => {
+  loading.value = true;
   const response = await $fetch(`/api/users/get/admins`, {
     method: "GET",
     query: {
@@ -24,21 +27,19 @@ const fetchAdmins = async () => {
 
   rows.value = response.admins || [];
   totalPages.value = response.totalPages;
+
+  loading.value = false;
 };
 
 // Fetch admins when the component is mounted and whenever `currentPage` changes
 watch([currentPage, pageSize], fetchAdmins, { immediate: true });
 
 function nextPage() {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value += 1;
-  }
+  currentPage.value += 1;
 }
 
 function prevPage() {
-  if (currentPage.value > 1) {
-    currentPage.value -= 1;
-  }
+  currentPage.value -= 1;
 }
 </script>
 
@@ -51,8 +52,8 @@ function prevPage() {
         Users
       </h1>
     </div>
-    <div class="md:flex md:justify-center">
-      <Details summary="Admins" class="md:w-3/4">
+    <div class="flex flex-col md:items-center">
+      <!-- <Details summary="Admins" class="md:w-3/4">
         <UsersTable
           :headers="headers"
           :rows="rows"
@@ -66,6 +67,17 @@ function prevPage() {
           @update="fetchAdmins"
           @refresh="fetchAdmins"
         />
+      </Details> -->
+      <Details summary="Admins with modular table" class="md:w-3/4">
+        <Pagination
+          :currentPage="currentPage"
+          :totalPages="totalPages"
+          :loading="loading"
+          v-on:nextPage="nextPage"
+          v-on:prevPage="prevPage"
+          class="mb-1"
+        />
+        <Table :headers="headers" :rows="rows" :headerKeyMap="headerKeyMap" />
       </Details>
     </div>
   </NuxtLayout>
