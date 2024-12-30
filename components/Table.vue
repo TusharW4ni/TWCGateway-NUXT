@@ -1,105 +1,3 @@
-<!-- <script setup lang="ts">
-import { ref } from "vue";
-
-type Row = {
-  [key: string]: any;
-};
-
-const props = defineProps<{
-  headers: string[];
-  rows: Row[];
-  headerKeyMap?: Record<string, string>;
-}>();
-
-const emits = defineEmits(["add", "save", "cancel"]);
-
-const headerKeyMap = props.headerKeyMap || {};
-const isAddingRow = ref(false);
-const newRow = ref<Row | null>(null);
-
-function startAddingRow() {
-  isAddingRow.value = true;
-  newRow.value = {};
-}
-
-function cancelAddingRow() {
-  isAddingRow.value = false;
-  newRow.value = null;
-  emits("cancel");
-}
-
-function saveNewRow() {
-  if (newRow.value) {
-    emits("save", newRow.value);
-    isAddingRow.value = false;
-    newRow.value = null;
-  }
-}
-</script> -->
-
-<!-- <template>
-  <div class="relative">
-    <div class="border-2 rounded-lg border-gray-300 shadow-lg overflow-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th
-              v-for="header in headers"
-              :key="header"
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              {{ header }}
-            </th>
-            <th class="px-6 py-3"></th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <tr
-            v-for="row in rows"
-            :key="row.id || row.email || JSON.stringify(row)"
-          >
-            <td
-              v-for="header in headers"
-              :key="header"
-              class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-            >
-              {{ row[headerKeyMap[header] || header] }}
-            </td>
-            <td></td>
-          </tr>
-          <tr v-if="isAddingRow">
-            <td
-              v-for="header in headers"
-              :key="header"
-              class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-            >
-              <input
-                v-model="newRow[headerKeyMap[header] || header]"
-                class="border border-gray-300 rounded px-2 py-1 w-full"
-                type="text"
-                :placeholder="header"
-              />
-            </td>
-            <td class="px-6 py-4">
-              <button @click="saveNewRow" class="text-green-500">Save</button>
-              <button @click="cancelAddingRow" class="text-red-500 ml-2">
-                Cancel
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <button
-      v-if="!isAddingRow"
-      @click="startAddingRow"
-      class="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-    >
-      Add New
-    </button>
-  </div>
-</template> -->
-
 <script setup lang="ts">
 type Row = {
   [key: string]: any;
@@ -108,10 +6,21 @@ type Row = {
 const props = defineProps<{
   headers: string[];
   rows: Row[];
-  headerKeyMap?: Record<string, string>;
+  loading: Boolean;
 }>();
 
-const headerKeyMap = props.headerKeyMap || {};
+// Derive keys from headers dynamically
+function getRowValue(row: Row, header: string): any {
+  const camelCaseKey = header
+    .split(" ")
+    .map((word, index) =>
+      index === 0
+        ? word.toLowerCase()
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    )
+    .join("");
+  return row[camelCaseKey];
+}
 </script>
 
 <template>
@@ -127,11 +36,11 @@ const headerKeyMap = props.headerKeyMap || {};
             >
               {{ header }}
             </th>
-            <th class="px-6 py-3"></th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           <tr
+            v-if="!loading"
             v-for="row in rows"
             :key="row.id || row.email || JSON.stringify(row)"
           >
@@ -140,9 +49,15 @@ const headerKeyMap = props.headerKeyMap || {};
               :key="header"
               class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
             >
-              {{ row[headerKeyMap[header] || header] }}
+              {{ getRowValue(row, header) }}
             </td>
-            <td></td>
+          </tr>
+          <tr v-else>
+            <td :colspan="props.headers.length" class="p-2">
+              <div class="flex justify-center items-center">
+                <img src="/assets/blocks-shuffle-3.svg" />
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>

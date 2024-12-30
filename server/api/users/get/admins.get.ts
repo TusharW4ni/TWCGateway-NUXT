@@ -2,7 +2,7 @@ export default defineEventHandler(async (event) => {
   try {
     const query = getQuery(event);
     const page = parseInt(query.page as string) || 1;
-    const pageSize = parseInt(query.pageSize as string) || 3;
+    const pageSize = parseInt(query.pageSize as string) || 10;
     const skip = (page - 1) * pageSize;
 
     const [admins, total] = await Promise.all([

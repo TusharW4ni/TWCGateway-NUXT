@@ -7,7 +7,8 @@ const currentPage = ref(1);
 const totalPages = ref(1);
 const rows = ref<User[]>([]);
 
-const loading = ref(false);
+const loadingAdmins = ref(false);
+const loadingAdminTotalPages = ref(false);
 
 const headerKeyMap = {
   "First Name": "firstName",
@@ -16,7 +17,7 @@ const headerKeyMap = {
 };
 
 const fetchAdmins = async () => {
-  loading.value = true;
+  loadingAdmins.value = true;
   const response = await $fetch(`/api/users/get/admins`, {
     method: "GET",
     query: {
@@ -26,13 +27,35 @@ const fetchAdmins = async () => {
   });
 
   rows.value = response.admins || [];
-  totalPages.value = response.totalPages;
 
-  loading.value = false;
+  loadingAdmins.value = false;
 };
 
-// Fetch admins when the component is mounted and whenever `currentPage` changes
-watch([currentPage, pageSize], fetchAdmins, { immediate: true });
+const fetchAdminsTotalPages = async () => {
+  loadingAdminTotalPages.value = true;
+  const response = await $fetch(`/api/users/get/admins-totalPages`, {
+    method: "GET",
+    query: {
+      pageSize: pageSize.value,
+    },
+  });
+
+  totalPages.value = response.totalPages;
+  loadingAdminTotalPages.value = false;
+};
+fetchAdminsTotalPages();
+
+watch(
+  [currentPage, pageSize],
+  () => {
+    fetchAdmins();
+    // fetchAdminsTotalPages();
+    //TODO: implement totalPages fetch when new admin is added.
+  },
+  {
+    immediate: true,
+  }
+);
 
 function nextPage() {
   currentPage.value += 1;
@@ -72,12 +95,12 @@ function prevPage() {
         <Pagination
           :currentPage="currentPage"
           :totalPages="totalPages"
-          :loading="loading"
+          :loading="loadingAdminTotalPages"
           v-on:nextPage="nextPage"
           v-on:prevPage="prevPage"
           class="mb-1"
         />
-        <Table :headers="headers" :rows="rows" :headerKeyMap="headerKeyMap" />
+        <Table :headers="headers" :rows="rows" :loading="loadingAdmins" />
       </Details>
     </div>
   </NuxtLayout>
