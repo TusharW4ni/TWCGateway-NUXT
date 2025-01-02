@@ -10,4 +10,9 @@ export default defineNuxtConfig({
     AUTH0_SECRET: "",
     SERVER_BASE_URL: "",
   },
+  app: {
+    head: {
+      link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.svg" }],
+    },
+  },
 });

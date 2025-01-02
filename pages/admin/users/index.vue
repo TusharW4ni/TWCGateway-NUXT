@@ -1,5 +1,30 @@
 <script setup lang="ts">
 import type { User } from "@prisma/client";
+import { toast, type ToastOptions } from "vue3-toastify";
+
+function notify_success(message: string) {
+  toast(message, {
+    autoClose: 3000,
+    position: toast.POSITION.TOP_RIGHT,
+    pauseOnHover: true,
+    transition: "slide",
+    progressStyle: {
+      background: "purple",
+    },
+  } as ToastOptions);
+}
+
+function notify_error(message: string) {
+  toast(message, {
+    autoClose: 3000,
+    position: toast.POSITION.TOP_RIGHT,
+    pauseOnHover: true,
+    transition: "slide",
+    progressStyle: {
+      background: "red",
+    },
+  } as ToastOptions);
+}
 
 const headers = ["First Name", "Last Name", "Email"];
 const pageSize = ref(3);
@@ -10,11 +35,7 @@ const rows = ref<User[]>([]);
 const loadingAdmins = ref(false);
 const loadingAdminTotalPages = ref(false);
 
-const headerKeyMap = {
-  "First Name": "firstName",
-  "Last Name": "lastName",
-  Email: "email",
-};
+const editAdminRow = ref(null);
 
 const fetchAdmins = async () => {
   loadingAdmins.value = true;
@@ -25,7 +46,7 @@ const fetchAdmins = async () => {
       pageSize: pageSize.value,
     },
   });
-
+  console.log({ Admins: response });
   rows.value = response.admins || [];
 
   loadingAdmins.value = false;
@@ -45,12 +66,22 @@ const fetchAdminsTotalPages = async () => {
 };
 fetchAdminsTotalPages();
 
+const fetchOnboardingEmployees = async () => {
+  const response = await $fetch(`/api/users/get/onboardingEmployees`, {
+    method: "GET",
+    query: {
+      page: 1,
+      pageSize: 1,
+    },
+  });
+  console.log({ OnboardingEmployees: response });
+};
+fetchOnboardingEmployees();
+
 watch(
   [currentPage, pageSize],
   () => {
     fetchAdmins();
-    // fetchAdminsTotalPages();
-    //TODO: implement totalPages fetch when new admin is added.
   },
   {
     immediate: true,
@@ -64,6 +95,78 @@ function nextPage() {
 function prevPage() {
   currentPage.value -= 1;
 }
+
+function onEditRow(row: any) {
+  // console.log("A row has been selected", row);
+  editAdminRow.value = row;
+}
+
+function onSaveEditRow(row: any) {
+  try {
+    const editedAdmin = $fetch("/api/users/put/admin", {
+      method: "PUT",
+      body: row,
+    });
+    notify_success("User Edited Successfully");
+    fetchAdmins();
+    onCloseEditRow();
+  } catch (e) {
+    console.log({ e });
+    notify_error("Problem Editing User");
+  }
+}
+
+function onCloseEditRow() {
+  editAdminRow.value = null;
+}
+
+// Handle Esc key press to clear clickedRow
+function handleKeydown(event: KeyboardEvent) {
+  if (event.key === "Escape") {
+    onCloseEditRow();
+  }
+}
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", handleKeydown);
+});
+
+const adminAddRow = ref(false);
+const adminAddRowData = ref(null);
+
+function onAdminAddRow() {
+  adminAddRow.value = true;
+}
+
+async function onAdminAddRowSubmit(row: any) {
+  adminAddRowData.value = row;
+  try {
+    const newAdmin = await $fetch("/api/users/post/admin", {
+      method: "POST",
+      body: {
+        firstName: adminAddRowData.value?.firstName,
+        lastName: adminAddRowData.value?.lastName,
+        email: adminAddRowData.value?.email,
+      },
+    });
+    notify_success("Admin added successfully!");
+    fetchAdmins();
+    fetchAdminsTotalPages();
+    onCancelAdminAddRow();
+  } catch (e) {
+    console.log({ ErrorInAddingAdming: e });
+    notify_error("Error in adding new admin.");
+  }
+}
+
+function onCancelAdminAddRow() {
+  adminAddRow.value = false;
+  adminAddRowData.value = null;
+}
 </script>
 
 <template>
@@ -76,23 +179,9 @@ function prevPage() {
       </h1>
     </div>
     <div class="flex flex-col md:items-center">
-      <!-- <Details summary="Admins" class="md:w-3/4">
-        <UsersTable
-          :headers="headers"
-          :rows="rows"
-          :headerKeyMap="headerKeyMap"
-          :type="'Admin'"
-          @save="fetchAdmins"
-          :currentPage="currentPage"
-          :totalPages="totalPages"
-          @nextPage="nextPage"
-          @prevPage="prevPage"
-          @update="fetchAdmins"
-          @refresh="fetchAdmins"
-        />
-      </Details> -->
-      <Details summary="Admins with modular table" class="md:w-3/4">
+      <Details summary="Admins" class="md:w-3/4">
         <Pagination
+          v-if="!editAdminRow && !adminAddRow"
           :currentPage="currentPage"
           :totalPages="totalPages"
           :loading="loadingAdminTotalPages"
@@ -100,7 +189,26 @@ function prevPage() {
           v-on:prevPage="prevPage"
           class="mb-1"
         />
-        <Table :headers="headers" :rows="rows" :loading="loadingAdmins" />
+        <Table
+          :headers="headers"
+          :rows="rows"
+          :loading="loadingAdmins"
+          @editRow="onEditRow"
+          @closeEditRow="onCloseEditRow"
+        />
+        <EditRow
+          v-if="editAdminRow"
+          :rowData="editAdminRow"
+          :type="'Admin'"
+          @save="onSaveEditRow"
+        />
+        <AddRow
+          v-if="!editAdminRow"
+          :type="'Admin'"
+          @activated="onAdminAddRow"
+          @deactivated="onCancelAdminAddRow"
+          @submit="onAdminAddRowSubmit"
+        />
       </Details>
     </div>
   </NuxtLayout>

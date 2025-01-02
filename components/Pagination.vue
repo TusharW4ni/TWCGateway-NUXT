@@ -30,11 +30,13 @@ function prevPage() {
     emit("prevPage");
   }
 }
+
+// const inputPlaceholder = ref(`${props.currentPage}/${props.totalPages}`);
 </script>
 
 <template>
   <div
-    class="flex justify-center items-center bg-white p-2 rounded-lg border-2 space-x-4"
+    class="flex justify-center items-center bg-white p-2 rounded-lg border-2 space-x-4 overflow-auto"
   >
     <button
       class="flex justify-center items-center bg-gray-100 p-2 border-2 border-gray-200 rounded text-gray-200 hover:border-gray-900 hover:text-black disabled:cursor-not-allowed disabled:border-gray-100 disabled:bg-gray-100 disabled:text-gray-200"
@@ -43,6 +45,12 @@ function prevPage() {
     >
       <ChevronLeftIcon class="w-5" />
     </button>
+
+    <!-- <input
+      v-if="!loading"
+      class="flex justify-center items-center bg-gray-100 p-2 rounded w-20"
+      v-model=""
+    /> -->
 
     <div class="flex justify-center items-center bg-gray-100 p-2 rounded w-20">
       <span v-if="!loading">
