@@ -26,62 +26,71 @@ function notify_error(message: string) {
   } as ToastOptions);
 }
 
-const headers = ["First Name", "Last Name", "Email"];
-const pageSize = ref(3);
-const currentPage = ref(1);
-const totalPages = ref(1);
-const rows = ref<User[]>([]);
+const adminHeaders = ["First Name", "Last Name", "Email"];
+const adminPageSize = ref(3);
+const adminCurrentPage = ref(1);
+const adminTotalPages = ref(1);
+const adminRows = ref<User[]>([]);
+const adminLoading = ref(false);
+const adminLoadingTotalPages = ref(false);
+const adminEditRow = ref(null);
+const adminAddRow = ref(false);
+const adminAddRowData = ref(null);
 
-const loadingAdmins = ref(false);
-const loadingAdminTotalPages = ref(false);
+async function adminFetchAll() {
+  try {
+    adminLoading.value = true;
+    const res = await $fetch(`/api/users/get/admins`, {
+      method: "GET",
+      query: {
+        page: adminCurrentPage.value,
+        pageSize: adminPageSize.value,
+      },
+    });
+    adminRows.value = res.admins || [];
+    adminLoading.value = false;
+  } catch (e) {
+    console.log(e);
+    notify_error("Error fetching all Admins.");
+    adminLoading.value = false;
+  }
+}
 
-const editAdminRow = ref(null);
+async function adminFetchTotalPages() {
+  try {
+    adminLoadingTotalPages.value = true;
+    const res = await $fetch(`/api/users/get/admins-totalPages`, {
+      method: "GET",
+      query: {
+        pageSize: adminPageSize.value,
+      },
+    });
+    adminTotalPages.value = res.totalPages;
+    adminLoadingTotalPages.value = false;
+  } catch (e) {
+    console.log(e);
+    notify_error("Error fetching Admin's total pages.");
+    adminLoadingTotalPages.value = false;
+  }
+}
+adminFetchTotalPages();
 
-const fetchAdmins = async () => {
-  loadingAdmins.value = true;
-  const response = await $fetch(`/api/users/get/admins`, {
-    method: "GET",
-    query: {
-      page: currentPage.value,
-      pageSize: pageSize.value,
-    },
-  });
-  console.log({ Admins: response });
-  rows.value = response.admins || [];
-
-  loadingAdmins.value = false;
-};
-
-const fetchAdminsTotalPages = async () => {
-  loadingAdminTotalPages.value = true;
-  const response = await $fetch(`/api/users/get/admins-totalPages`, {
-    method: "GET",
-    query: {
-      pageSize: pageSize.value,
-    },
-  });
-
-  totalPages.value = response.totalPages;
-  loadingAdminTotalPages.value = false;
-};
-fetchAdminsTotalPages();
-
-const fetchOnboardingEmployees = async () => {
-  const response = await $fetch(`/api/users/get/onboardingEmployees`, {
-    method: "GET",
-    query: {
-      page: 1,
-      pageSize: 1,
-    },
-  });
-  console.log({ OnboardingEmployees: response });
-};
-fetchOnboardingEmployees();
+// const fetchOnboardingEmployees = async () => {
+//   const response = await $fetch(`/api/users/get/onboardingEmployees`, {
+//     method: "GET",
+//     query: {
+//       page: 1,
+//       pageSize: 3,
+//     },
+//   });
+//   console.log({ OnboardingEmployees: response });
+// };
+// fetchOnboardingEmployees();
 
 watch(
-  [currentPage, pageSize],
+  [adminCurrentPage, adminPageSize],
   () => {
-    fetchAdmins();
+    adminFetchAll();
   },
   {
     immediate: true,
@@ -89,18 +98,17 @@ watch(
 );
 
 function nextPage() {
-  currentPage.value += 1;
+  adminCurrentPage.value += 1;
 }
 
 function prevPage() {
-  currentPage.value -= 1;
+  adminCurrentPage.value -= 1;
 }
 
 function onEditRow(row: any) {
-  // console.log("A row has been selected", row);
-  editAdminRow.value = row;
+  adminEditRow.value = row;
 }
-
+//start here
 function onSaveEditRow(row: any) {
   try {
     const editedAdmin = $fetch("/api/users/put/admin", {
@@ -108,7 +116,7 @@ function onSaveEditRow(row: any) {
       body: row,
     });
     notify_success("User Edited Successfully");
-    fetchAdmins();
+    adminFetchAll();
     onCloseEditRow();
   } catch (e) {
     console.log({ e });
@@ -117,10 +125,9 @@ function onSaveEditRow(row: any) {
 }
 
 function onCloseEditRow() {
-  editAdminRow.value = null;
+  adminEditRow.value = null;
 }
 
-// Handle Esc key press to clear clickedRow
 function handleKeydown(event: KeyboardEvent) {
   if (event.key === "Escape") {
     onCloseEditRow();
@@ -134,9 +141,6 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener("keydown", handleKeydown);
 });
-
-const adminAddRow = ref(false);
-const adminAddRowData = ref(null);
 
 function onAdminAddRow() {
   adminAddRow.value = true;
@@ -154,8 +158,9 @@ async function onAdminAddRowSubmit(row: any) {
       },
     });
     notify_success("Admin added successfully!");
-    fetchAdmins();
-    fetchAdminsTotalPages();
+    adminCurrentPage.value = 1;
+    adminFetchAll();
+    adminFetchTotalPages();
     onCancelAdminAddRow();
   } catch (e) {
     console.log({ ErrorInAddingAdming: e });
@@ -167,6 +172,7 @@ function onCancelAdminAddRow() {
   adminAddRow.value = false;
   adminAddRowData.value = null;
 }
+//stop here
 </script>
 
 <template>
@@ -179,31 +185,34 @@ function onCancelAdminAddRow() {
       </h1>
     </div>
     <div class="flex flex-col md:items-center">
+      <Details summary="Onboarding Employees" class="md:w-3/4"> </Details>
+    </div>
+    <div class="flex flex-col md:items-center">
       <Details summary="Admins" class="md:w-3/4">
         <Pagination
-          v-if="!editAdminRow && !adminAddRow"
-          :currentPage="currentPage"
-          :totalPages="totalPages"
-          :loading="loadingAdminTotalPages"
+          v-if="!adminEditRow && !adminAddRow"
+          :currentPage="adminCurrentPage"
+          :totalPages="adminTotalPages"
+          :loading="adminLoadingTotalPages"
           v-on:nextPage="nextPage"
           v-on:prevPage="prevPage"
           class="mb-1"
         />
         <Table
-          :headers="headers"
-          :rows="rows"
-          :loading="loadingAdmins"
+          :headers="adminHeaders"
+          :rows="adminRows"
+          :loading="adminLoading"
           @editRow="onEditRow"
           @closeEditRow="onCloseEditRow"
         />
         <EditRow
-          v-if="editAdminRow"
-          :rowData="editAdminRow"
+          v-if="adminEditRow"
+          :rowData="adminEditRow"
           :type="'Admin'"
           @save="onSaveEditRow"
         />
         <AddRow
-          v-if="!editAdminRow"
+          v-if="!adminEditRow"
           :type="'Admin'"
           @activated="onAdminAddRow"
           @deactivated="onCancelAdminAddRow"
