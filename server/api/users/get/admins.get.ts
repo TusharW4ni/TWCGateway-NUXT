@@ -3,6 +3,8 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event);
     const page = parseInt(query.page as string) || 1;
     const pageSize = parseInt(query.pageSize as string) || 10;
+    const searchString = (query.searchString as string) || "";
+    console.log({ searchString });
     const skip = (page - 1) * pageSize;
 
     const [admins, total] = await Promise.all([
@@ -10,6 +12,23 @@ export default defineEventHandler(async (event) => {
         where: {
           role: "Admin",
           archived: false,
+          OR: [
+            {
+              firstName: {
+                contains: searchString,
+              },
+            },
+            {
+              lastName: {
+                contains: searchString,
+              },
+            },
+            {
+              email: {
+                contains: searchString,
+              },
+            },
+          ],
         },
         skip,
         take: pageSize,

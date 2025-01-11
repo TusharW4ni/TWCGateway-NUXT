@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
   devtools: { enabled: true },
   css: ["~/app.css"],
-  modules: ["@nuxtjs/tailwindcss", "@prisma/nuxt"],
+  modules: ["@nuxtjs/tailwindcss", "@prisma/nuxt", "@pinia/nuxt"],
   runtimeConfig: {
     AUTH0_DOMAIN: "",
     AUTH0_CLIENT_ID: "",

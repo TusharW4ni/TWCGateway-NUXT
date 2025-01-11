@@ -1,224 +1,133 @@
 <script setup lang="ts">
 import type { User } from "@prisma/client";
-import { toast, type ToastOptions } from "vue3-toastify";
+import { useToast } from "../../../composables/useToast.ts";
+const { notify } = useToast();
 
-function notify_success(message: string) {
-  toast(message, {
-    autoClose: 3000,
-    position: toast.POSITION.TOP_RIGHT,
-    pauseOnHover: true,
-    transition: "slide",
-    progressStyle: {
-      background: "purple",
-    },
-  } as ToastOptions);
-}
-
-function notify_error(message: string) {
-  toast(message, {
-    autoClose: 3000,
-    position: toast.POSITION.TOP_RIGHT,
-    pauseOnHover: true,
-    transition: "slide",
-    progressStyle: {
-      background: "red",
-    },
-  } as ToastOptions);
-}
-
+// ------------------ Admin ------------------------- //
 const adminHeaders = ["First Name", "Last Name", "Email"];
-const adminPageSize = ref(3);
 const adminCurrentPage = ref(1);
-const adminTotalPages = ref(1);
-const adminRows = ref<User[]>([]);
-const adminLoading = ref(false);
-const adminLoadingTotalPages = ref(false);
-const adminEditRow = ref(null);
-const adminAddRow = ref(false);
-const adminAddRowData = ref(null);
+const adminPageSize = ref(3);
+const adminSearchString = ref("");
 
-async function adminFetchAll() {
-  try {
-    adminLoading.value = true;
-    const res = await $fetch(`/api/users/get/admins`, {
-      method: "GET",
-      query: {
-        page: adminCurrentPage.value,
-        pageSize: adminPageSize.value,
-      },
-    });
-    adminRows.value = res.admins || [];
-    adminLoading.value = false;
-  } catch (e) {
-    console.log(e);
-    notify_error("Error fetching all Admins.");
-    adminLoading.value = false;
-  }
-}
-
-async function adminFetchTotalPages() {
-  try {
-    adminLoadingTotalPages.value = true;
-    const res = await $fetch(`/api/users/get/admins-totalPages`, {
-      method: "GET",
-      query: {
-        pageSize: adminPageSize.value,
-      },
-    });
-    adminTotalPages.value = res.totalPages;
-    adminLoadingTotalPages.value = false;
-  } catch (e) {
-    console.log(e);
-    notify_error("Error fetching Admin's total pages.");
-    adminLoadingTotalPages.value = false;
-  }
-}
-adminFetchTotalPages();
-
-// const fetchOnboardingEmployees = async () => {
-//   const response = await $fetch(`/api/users/get/onboardingEmployees`, {
-//     method: "GET",
-//     query: {
-//       page: 1,
-//       pageSize: 3,
-//     },
-//   });
-//   console.log({ OnboardingEmployees: response });
-// };
-// fetchOnboardingEmployees();
-
-watch(
-  [adminCurrentPage, adminPageSize],
-  () => {
-    adminFetchAll();
+const adminsLoading = ref(false);
+const admins = await useFetch(`/api/users/get/admins`, {
+  query: {
+    page: adminCurrentPage,
+    pageSize: adminPageSize,
+    searchString: adminSearchString,
   },
-  {
-    immediate: true,
-  }
-);
-
-function nextPage() {
-  adminCurrentPage.value += 1;
-}
-
-function prevPage() {
-  adminCurrentPage.value -= 1;
-}
-
-function onEditRow(row: any) {
-  adminEditRow.value = row;
-}
-//start here
-function onSaveEditRow(row: any) {
-  try {
-    const editedAdmin = $fetch("/api/users/put/admin", {
-      method: "PUT",
-      body: row,
-    });
-    notify_success("User Edited Successfully");
-    adminFetchAll();
-    onCloseEditRow();
-  } catch (e) {
-    console.log({ e });
-    notify_error("Problem Editing User");
-  }
-}
-
-function onCloseEditRow() {
-  adminEditRow.value = null;
-}
-
-function handleKeydown(event: KeyboardEvent) {
-  if (event.key === "Escape") {
-    onCloseEditRow();
-  }
-}
-
-onMounted(() => {
-  window.addEventListener("keydown", handleKeydown);
+  onRequest() {
+    adminsLoading.value = true;
+  },
+  onResponse() {
+    adminsLoading.value = false;
+  },
+  onRequestError({ error }) {
+    console.log({ adminsOnRequestError: error });
+    notify("Error fetching all admin users (onRequestError).", "error");
+  },
+  onResponseError() {
+    notify("Error fetching all admin users (onResponseError).", "error");
+  },
 });
 
-onUnmounted(() => {
-  window.removeEventListener("keydown", handleKeydown);
+const adminTotalPagesLoading = ref(false);
+const adminTotalPages = await useFetch(`/api/users/get/admins-totalPages`, {
+  query: {
+    pageSize: adminPageSize,
+    searchString: adminSearchString,
+  },
+  onRequest() {
+    adminTotalPagesLoading.value = true;
+  },
+  onResponse() {
+    adminTotalPagesLoading.value = false;
+  },
+  onRequestError() {
+    notify(
+      "Error fetching total pages for admin table pagination (onRequestError).",
+      "error"
+    );
+  },
+  onResponseError() {
+    notify(
+      "Error fetching total pages for admin tbale pagination (onResponseError).",
+      "error"
+    );
+  },
 });
 
-function onAdminAddRow() {
-  adminAddRow.value = true;
+function adminChangePage(direction: String) {
+  if (direction === "increment") {
+    adminCurrentPage.value += 1;
+  } else if (direction === "decrement") {
+    adminCurrentPage.value -= 1;
+  } else {
+    console.log("Error changing page for admins");
+  }
 }
 
-async function onAdminAddRowSubmit(row: any) {
-  adminAddRowData.value = row;
+function updateAdminSearchString(searchString: string) {
+  adminSearchString.value = searchString;
+}
+
+async function adminNewUser(adminRow: any) {
   try {
-    const newAdmin = await $fetch("/api/users/post/admin", {
+    await $fetch("/api/users/post/admin", {
       method: "POST",
       body: {
-        firstName: adminAddRowData.value?.firstName,
-        lastName: adminAddRowData.value?.lastName,
-        email: adminAddRowData.value?.email,
+        firstName: adminRow.firstName,
+        lastName: adminRow.lastName,
+        email: adminRow.email,
       },
     });
-    notify_success("Admin added successfully!");
     adminCurrentPage.value = 1;
-    adminFetchAll();
-    adminFetchTotalPages();
-    onCancelAdminAddRow();
+    adminTotalPages.refresh();
+    // admins.refresh() // No need to do this because adminCurrentPage.value = 1 reloads admins.
+    notify("Added new admin successfully!", "success");
   } catch (e) {
-    console.log({ ErrorInAddingAdming: e });
-    notify_error("Error in adding new admin.");
+    console.log(e);
+    notify("Error adding new admin user.", "error");
   }
 }
 
-function onCancelAdminAddRow() {
-  adminAddRow.value = false;
-  adminAddRowData.value = null;
+function adminAddRowError(error: string) {
+  notify(error, "error");
 }
-//stop here
 </script>
 
 <template>
   <NuxtLayout name="admin-navbar">
-    <div>
-      <h1
-        class="text-md p-3 uppercase font-bold tracking-widest flex justify-center md:w-[calc(100vw-5rem)]"
+    <div
+      class="w-full h-[calc(100vh-4rem)] md:h-screen md:w-[calc(100vw-4rem)]"
+    >
+      <div
+        class="flex p-2 w-full justify-center items-center uppercase tracking-widest font-bold text-lg"
       >
         Users
-      </h1>
-    </div>
-    <div class="flex flex-col md:items-center">
-      <Details summary="Onboarding Employees" class="md:w-3/4"> </Details>
-    </div>
-    <div class="flex flex-col md:items-center">
-      <Details summary="Admins" class="md:w-3/4">
-        <Pagination
-          v-if="!adminEditRow && !adminAddRow"
-          :currentPage="adminCurrentPage"
-          :totalPages="adminTotalPages"
-          :loading="adminLoadingTotalPages"
-          v-on:nextPage="nextPage"
-          v-on:prevPage="prevPage"
-          class="mb-1"
-        />
-        <Table
-          :headers="adminHeaders"
-          :rows="adminRows"
-          :loading="adminLoading"
-          @editRow="onEditRow"
-          @closeEditRow="onCloseEditRow"
-        />
-        <EditRow
-          v-if="adminEditRow"
-          :rowData="adminEditRow"
-          :type="'Admin'"
-          @save="onSaveEditRow"
-        />
-        <AddRow
-          v-if="!adminEditRow"
-          :type="'Admin'"
-          @activated="onAdminAddRow"
-          @deactivated="onCancelAdminAddRow"
-          @submit="onAdminAddRowSubmit"
-        />
-      </Details>
+      </div>
+      <div class="md:flex md:justify-center">
+        <Details summary="Admins" class="md:w-3/4">
+          <Pagination
+            :currentPage="adminCurrentPage"
+            :totalPages="adminTotalPages.data.value.totalPages"
+            :loading="adminTotalPagesLoading"
+            @nextPage="adminChangePage('increment')"
+            @prevPage="adminChangePage('decrement')"
+          />
+          <Table
+            :headers="adminHeaders"
+            :rows="admins.data.value.admins"
+            :loading="adminsLoading"
+            @search="updateAdminSearchString"
+          />
+          <AddRow
+            :type="'Admin'"
+            @submit="adminNewUser"
+            @error="adminAddRowError"
+          />
+        </Details>
+      </div>
     </div>
   </NuxtLayout>
 </template>

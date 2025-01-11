@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "TWCGateway-NUXT-API-Testing",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

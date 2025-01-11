@@ -3,51 +3,23 @@ import {
   PencilSquareIcon,
   TrashIcon,
   XMarkIcon,
+  MagnifyingGlassIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
 } from "@heroicons/vue/24/solid";
+import { useRowClickedStore } from "../stores/useRowClickedStore.ts";
+import { useAddRowStore } from "../stores/useAddRowStore.ts";
+
+const props = defineProps<{
+  headers: string[];
+  rows: Row[];
+  loading: boolean;
+}>();
 
 type Row = {
   [key: string]: any;
 };
 
-const props = defineProps<{
-  headers: string[];
-  rows: Row[];
-  loading: Boolean;
-}>();
-
-const emits = defineEmits(["editRow", "closeEditRow"]);
-
-const clickedRow = ref<Row | null>(null);
-const editingRow = ref<Boolean>(false);
-
-// Handle row click to toggle clickedRow
-function rowClick(row: Row) {
-  // If the clicked row is already selected, deselect it
-  editingRow.value = false;
-  emits("closeEditRow");
-  if (clickedRow.value === row) {
-    clickedRow.value = null;
-  } else {
-    clickedRow.value = row;
-  }
-}
-
-// Handle Esc key press to clear clickedRow
-function handleKeydown(event: KeyboardEvent) {
-  if (event.key === "Escape") {
-    clickedRow.value = null;
-  }
-}
-
-onMounted(() => {
-  window.addEventListener("keydown", handleKeydown);
-});
-
-onUnmounted(() => {
-  window.removeEventListener("keydown", handleKeydown);
-});
-
-// Derive keys from headers dynamically
 function getRowValue(row: Row, header: string): any {
   const camelCaseKey = header
     .split(" ")
@@ -60,101 +32,174 @@ function getRowValue(row: Row, header: string): any {
   return row[camelCaseKey];
 }
 
-function editRow(row: Row, event: MouseEvent) {
-  event.stopPropagation();
-  editingRow.value = true;
-  emits("editRow", row);
+const rowClickedStore = useRowClickedStore();
+const addRowStore = useAddRowStore();
+const isRowClicked = <Row>ref("");
+const isEditing = ref(false);
+const emits = defineEmits(["edit", "close-edit", "search"]);
+const showSearch = ref(false);
+const searchString = ref("");
+
+function clickRow(row: Row) {
+  if (isRowClicked.value === "" && !addRowStore.addingRow) {
+    closeSearch();
+    isRowClicked.value = row;
+    rowClickedStore.rowClicked = true;
+  }
 }
 
-function cancelEditRow(event: MouseEvent) {
-  event.stopPropagation();
-  editingRow.value = false;
-  clickedRow.value = null;
-  emits("closeEditRow");
+function unclickRow() {
+  isRowClicked.value = "";
+  rowClickedStore.rowClicked = false;
+  if (isEditing) {
+    isEditing.value = false;
+    emits("close-edit");
+  }
 }
 
-function deleteRow(row: Row, event: MouseEvent) {
-  event.stopPropagation();
+function clickEdit(row: Row) {
+  isEditing.value = true;
+  emits("edit", row);
 }
+
+function toggleSearch() {
+  showSearch.value = !showSearch.value;
+  if (showSearch.value === false) {
+    searchString.value = "";
+  }
+}
+
+function closeSearch() {
+  showSearch.value = false;
+  searchString.value = "";
+}
+
+function submitSearch() {
+  // event.preventDefault();
+  emits("search", searchString.value);
+}
+
+watch([searchString], () => {
+  submitSearch();
+});
 </script>
 
 <template>
-  <div class="relative">
-    <div class="border-2 rounded-lg border-gray-300 shadow-lg overflow-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th v-if="clickedRow" class="w-12"></th>
-            <th
-              v-for="header in headers"
-              :key="header"
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              {{ header }}
-            </th>
-            <th v-if="clickedRow" class="w-12"></th>
-          </tr>
-        </thead>
-        <tbody v-if="!loading" class="bg-white divide-y divide-gray-200">
-          <tr
-            v-for="row in rows"
-            :key="row.id || row.email || JSON.stringify(row)"
-            :class="{
-              'bg-blue-100': clickedRow === row,
-              'hover:bg-gray-100': clickedRow !== row,
-            }"
-            class="hover:cursor-pointer"
-            @click="rowClick(row)"
-          >
-            <!-- Left cell -->
-            <td v-if="clickedRow" class="p-2">
-              <button
-                v-if="!editingRow && clickedRow === row"
-                class="border-2 border-gray-500 bg-gray-300 p-2 rounded hover:border-green-900 hover:text-green-500 hover:bg-gray-100"
-                @click="editRow(row, $event)"
-              >
-                <PencilSquareIcon class="w-6" />
-              </button>
-              <button
-                v-if="editingRow && clickedRow === row"
-                class="border-2 border-gray-500 bg-gray-300 p-2 rounded hover:bg-gray-100"
-                @click="cancelEditRow($event)"
-              >
-                <XMarkIcon class="w-6" />
-              </button>
-            </td>
-
-            <!-- Dynamic data cells -->
-            <td
-              v-for="header in headers"
-              :key="header"
-              class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-            >
-              {{ getRowValue(row, header) }}
-            </td>
-
-            <!-- Right cell -->
-            <td v-if="clickedRow" class="p-2">
-              <button
-                v-if="clickedRow === row && !editingRow"
-                class="border-2 border-gray-500 bg-gray-300 p-2 rounded hover:border-red-900 hover:text-red-500 hover:bg-gray-100"
-                @click="deleteRow(row, $event)"
-              >
-                <TrashIcon class="w-6" />
-              </button>
-            </td>
-          </tr>
-        </tbody>
-        <tbody v-else>
-          <tr class="bg-white">
-            <td :colspan="props.headers.length" class="p-2">
-              <div class="flex justify-center items-center">
-                <img src="/assets/blocks-shuffle-3.svg" alt="Loading..." />
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <div
+    v-if="!isRowClicked && !addRowStore.addingRow"
+    class="flex justify-start ml-5"
+  >
+    <button
+      class="p-1 border-l-2 border-t-2 border-r-2 rounded-tr-lg rounded-tl-lg border-gray-300 text-black bg-gray-100 hover:border-black hover:bg-white"
+      @click="toggleSearch"
+    >
+      <div class="flex space-x-2">
+        <ChevronUpIcon v-if="!showSearch" class="w-5" />
+        <ChevronDownIcon v-if="showSearch" class="w-5" />
+        <MagnifyingGlassIcon class="w-5" />
+      </div>
+    </button>
+  </div>
+  <div class="overflow-x-auto border-2 border-black rounded-lg">
+    <div v-if="showSearch" class="w-full p-2 bg-white border-b-2 border-black">
+      <form @submit.prevent="submitSearch()" class="flex space-x-2">
+        <input
+          class="w-full px-2 py-1 rounded-lg border-2 outline-none focus:border-twc-blue border-blue-200 hover:border-blue-400 bg-gray-200 focus:bg-white"
+          placeholder="Search"
+          v-model="searchString"
+        />
+        <button
+          type="submit"
+          class="border-2 px-2 py-1 rounded-lg bg-gray-100 hover:border-black hover:bg-white"
+        >
+          <MagnifyingGlassIcon class="w-5" />
+        </button>
+      </form>
     </div>
+    <table class="table-auto w-full bg-white">
+      <thead>
+        <tr class="border-b-2 border-black uppercase tracking-wide text-sm">
+          <!-- Add empty headers for the icon columns -->
+          <th v-if="isRowClicked !== ''" class="text-center"></th>
+          <th v-if="isRowClicked !== '' && !isEditing" class="text-center"></th>
+          <th
+            v-for="(header, index) in headers"
+            :key="header"
+            class="text-center whitespace-nowrap"
+            :class="{
+              'border-l-2': index !== 0,
+              'border-r-2': index !== headers.length - 1,
+              'border-black': true,
+            }"
+          >
+            {{ header }}
+          </th>
+          <th v-if="isRowClicked !== '' && !isEditing" class="text-center"></th>
+        </tr>
+      </thead>
+      <tbody v-if="!loading">
+        <tr
+          v-for="row in rows"
+          :key="row.id"
+          :class="{
+            'bg-twc-blue text-white': isRowClicked === row,
+            'hover:bg-gray-100 cursor-pointer':
+              isRowClicked === '' && !addRowStore.addingRow,
+          }"
+          @click="clickRow(row)"
+        >
+          <td v-if="isRowClicked !== ''" class="text-center">
+            <button
+              v-if="isRowClicked === row"
+              class="border m-2 p-2 rounded hover:bg-white hover:text-black"
+              @click.stop="unclickRow"
+            >
+              <XMarkIcon class="w-5" />
+            </button>
+          </td>
+          <td v-if="isRowClicked !== '' && !isEditing" class="text-center">
+            <button
+              v-if="isRowClicked === row"
+              class="border m-2 p-2 rounded hover:bg-white hover:text-twc-green"
+              @click="clickEdit(row)"
+            >
+              <PencilSquareIcon class="w-5" />
+            </button>
+          </td>
+          <td
+            v-for="(header, colIndex) in headers"
+            :key="header"
+            class="text-center whitespace-nowrap"
+            :class="{
+              'border-l-2': colIndex !== 0,
+              'border-r-2': colIndex !== headers.length - 1,
+              'border-black': true,
+            }"
+          >
+            {{ getRowValue(row, header) }}
+          </td>
+          <td v-if="isRowClicked !== '' && !isEditing" class="text-center">
+            <button
+              v-if="isRowClicked === row"
+              class="border m-2 p-2 rounded hover:bg-white hover:text-twc-red"
+            >
+              <TrashIcon class="w-5" />
+            </button>
+          </td>
+        </tr>
+      </tbody>
+      <tbody v-if="loading">
+        <tr class="bg-white">
+          <td :colspan="props.headers.length" class="p-2">
+            <div class="flex justify-center items-center">
+              <img src="/assets/blocks-shuffle-3.svg" alt="Loading..." />
+            </div>
+          </td>
+        </tr>
+      </tbody>
+      <tbody v-if="!loading && !headers">
+        dfdf
+      </tbody>
+    </table>
   </div>
 </template>

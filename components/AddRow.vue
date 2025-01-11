@@ -1,116 +1,149 @@
 <script setup lang="ts">
-import { UserPlusIcon, XMarkIcon, CheckIcon } from "@heroicons/vue/24/solid";
+import { PlusIcon, XMarkIcon, CheckIcon } from "@heroicons/vue/24/solid";
+import { useRowClickedStore } from "../stores/useRowClickedStore.ts";
+import { useAddRowStore } from "../stores/useAddRowStore.ts";
 
 const props = defineProps({
   type: String,
 });
-
-const emits = defineEmits(["activated", "deactivated", "submit"]);
-
-// Handle Esc key press to clear clickedRow
-function handleKeydown(event: KeyboardEvent) {
-  if (event.key === "Escape") {
-    toggleActivate();
-  }
-}
-
-onMounted(() => {
-  window.addEventListener("keydown", handleKeydown);
-});
-
-onUnmounted(() => {
-  window.removeEventListener("keydown", handleKeydown);
-});
-
+const rowClickedStore = useRowClickedStore();
+const addRowStore = useAddRowStore();
 const activated = ref(false);
 
+const emits = defineEmits(["activated", "deactivated", "submit", "error"]);
+
 function toggleActivate() {
-  console.log({ activated: activated });
   activated.value = !activated.value;
   if (activated.value === true) {
+    addRowStore.addingRow = true;
     emits("activated");
   } else {
+    addRowStore.addingRow = false;
     emits("deactivated");
+    if (props.type === "Admin") clearAdminRow();
   }
 }
 
-const adminAddRow = {
+// ------------------ Admin ------------------------- //
+let adminRow = {
   firstName: "",
   lastName: "",
   email: "",
 };
 
-function adminSubmit(event: SubmitEvent) {
-  event.preventDefault();
-  emits("submit", adminAddRow);
-  activated.value = false;
-  emits("deactivated");
-  adminAddRow.value = {
+function clearAdminRow() {
+  adminRow = {
     firstName: "",
     lastName: "",
     email: "",
   };
 }
+
+async function isAdminEmailDuplicate() {
+  try {
+    const user = await $fetch("/api/users/get/adminByEmail", {
+      method: "GET",
+      query: {
+        email: adminRow.email,
+      },
+    });
+    if (user.user === null) {
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.log(e);
+    return true;
+  }
+}
+
+async function isAdminRowValid() {
+  adminRow.firstName = adminRow.firstName.trim();
+  adminRow.lastName = adminRow.lastName.trim();
+  adminRow.email = adminRow.email.trim();
+  if (
+    adminRow.firstName === "" ||
+    adminRow.lastName === "" ||
+    adminRow.email === ""
+  ) {
+    emits("error", "Error adding admin user: Values cannot be empty.");
+    return false;
+  } else if (await isAdminEmailDuplicate()) {
+    emits("error", "Error adding admin user: Email is duplicate.");
+    return false;
+  }
+  return true;
+}
+
+async function adminSubmit() {
+  if (await isAdminRowValid()) {
+    emits("submit", adminRow);
+    toggleActivate();
+    emits("deactivated");
+    clearAdminRow();
+  }
+}
 </script>
 
 <template>
   <div v-if="props.type === 'Admin'">
-    <div v-if="!activated">
-      <button
-        class="w-full border-2 bg-gray-100 flex justify-center items-center mt-1 rounded-lg p-1 hover:border-gray-900 text-gray-400 hover:text-gray-900 hover:bg-white"
-        @click="toggleActivate"
-      >
-        <UserPlusIcon class="w-5" />
-      </button>
-    </div>
-    <div v-else class="border-2 rounded-lg overflow-auto mt-1">
-      <form>
-        <table class="w-full bg-white">
-          <tr class="overflow-auto">
-            <td class="p-2">
-              <button
-                class="border-2 border-gray-400 rounded px-3 py-1 bg-gray-300 hover:bg-white"
-                @click="toggleActivate"
-              >
-                <XMarkIcon class="w-6" />
-              </button>
-            </td>
-            <td class="p-2">
-              <input
-                v-model="adminAddRow.firstName"
-                type="text"
-                placeholder="First Name"
-                class="border-2 border-gray-300 rounded px-2 py-1 min-w-min hover:border-twc-blue focus:outline-none focus:border-twc-blue bg-blue-100 focus:bg-white"
-              />
-            </td>
-            <td class="p-2">
-              <input
-                v-model="adminAddRow.lastName"
-                type="text"
-                placeholder="Last Name"
-                class="border-2 border-gray-300 rounded px-2 py-1 min-w-min hover:border-twc-blue focus:outline-none focus:border-twc-blue bg-blue-100 focus:bg-white"
-              />
-            </td>
-            <td class="p-2">
-              <input
-                v-model="adminAddRow.email"
-                type="text"
-                placeholder="Email"
-                class="border-2 border-gray-300 rounded px-2 py-1 min-w-min hover:border-twc-blue focus:outline-none focus:border-twc-blue bg-blue-100 focus:bg-white"
-              />
-            </td>
-            <td class="p-2">
-              <button
-                type="submit"
-                class="bg-gray-300 border-2 border-gray-500 rounded text-black px-3 py-1 hover:bg-twc-green hover:border-twc-green hover:text-white focus:outline-none focus:border-twc-green focus:bg-twc-green focus:text-white"
-                @click="adminSubmit"
-              >
-                <CheckIcon class="w-6" />
-              </button>
-            </td>
-          </tr>
-        </table>
-      </form>
+    <div v-if="!rowClickedStore.rowClicked">
+      <div v-if="!activated">
+        <button
+          class="w-full border-2 bg-gray-100 flex justify-center items-center mt-1 rounded-lg p-1 hover:border-gray-900 text-gray-900 hover:text-gray-900 hover:bg-white"
+          @click="toggleActivate"
+        >
+          <PlusIcon class="w-4" />
+        </button>
+      </div>
+      <div v-else class="border-2 rounded-lg overflow-auto mt-1">
+        <form @submit.prevent="adminSubmit()" @keydown.enter.prevent>
+          <table class="w-full bg-twc-blue">
+            <tr class="overflow-auto">
+              <td class="p-2">
+                <button
+                  class="p-2 border rounded text-white hover:bg-white hover:text-black"
+                  @click="toggleActivate"
+                >
+                  <XMarkIcon class="w-6" />
+                </button>
+              </td>
+              <td class="p-2">
+                <input
+                  v-model="adminRow.firstName"
+                  type="text"
+                  placeholder="First Name"
+                  class="p-2 rounded-lg bg-gray-200 outline-none border-2 border-blue-300 hover:border-blue-500 focus:border-black focus:bg-white"
+                />
+              </td>
+              <td class="p-2">
+                <input
+                  v-model="adminRow.lastName"
+                  type="text"
+                  placeholder="Last Name"
+                  class="p-2 rounded-lg bg-gray-200 outline-none border-2 border-blue-300 hover:border-blue-500 focus:border-black focus:bg-white"
+                />
+              </td>
+              <td class="p-2">
+                <input
+                  v-model="adminRow.email"
+                  type="email"
+                  placeholder="Email"
+                  class="p-2 rounded-lg bg-gray-200 outline-none border-2 border-blue-300 hover:border-blue-500 focus:border-black focus:bg-white"
+                />
+              </td>
+              <td class="p-2">
+                <button
+                  type="submit"
+                  class="p-2 border text-white rounded-lg hover:bg-white hover:text-twc-green"
+                >
+                  <CheckIcon class="w-6" />
+                </button>
+              </td>
+            </tr>
+          </table>
+        </form>
+      </div>
     </div>
   </div>
 </template>

@@ -1,0 +1,17 @@
+meta {
+  name: getAllAdminsWithoutSearch
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:3000/api/users/get/admins?page=1&pageSize=3&searchString
+  body: none
+  auth: none
+}
+
+params:query {
+  page: 1
+  pageSize: 3
+  searchString: 
+}

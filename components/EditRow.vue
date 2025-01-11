@@ -132,14 +132,14 @@ const isCurrUser = computed(() => {
     class="border-2 rounded-lg overflow-auto mt-2 shadow-lg"
   >
     <form @submit="adminSaveChanges">
-      <table class="w-full bg-white">
+      <table class="w-full bg-twc-blue">
         <tbody>
           <tr class="overflow-auto">
             <td class="p-2">
               <input
                 v-model="adminEditedRow.firstName"
                 type="text"
-                class="border-2 border-gray-300 rounded px-2 py-1 min-w-min hover:border-twc-blue focus:outline-none focus:border-twc-blue bg-blue-100 focus:bg-white"
+                class="p-2 rounded-lg bg-gray-200 outline-none border-2 border-blue-300 hover:border-blue-500 focus:border-black focus:bg-white"
               />
               <div v-if="errors.firstName" class="text-red-500 text-sm">
                 {{ errors.firstName }}
@@ -149,7 +149,7 @@ const isCurrUser = computed(() => {
               <input
                 v-model="adminEditedRow.lastName"
                 type="text"
-                class="border-2 border-gray-300 rounded px-2 py-1 min-w-min hover:border-twc-blue focus:outline-none focus:border-twc-blue bg-blue-100 focus:bg-white"
+                class="p-2 rounded-lg bg-gray-200 outline-none border-2 border-blue-300 hover:border-blue-500 focus:border-black focus:bg-white"
               />
               <div v-if="errors.lastName" class="text-red-500 text-sm">
                 {{ errors.lastName }}
@@ -159,7 +159,7 @@ const isCurrUser = computed(() => {
               <input
                 v-model="adminEditedRow.email"
                 type="email"
-                class="border-2 border-gray-300 rounded px-2 py-1 min-w-min hover:border-twc-blue focus:outline-none focus:border-twc-blue bg-blue-100 focus:bg-white"
+                class="p-2 rounded-lg bg-gray-200 outline-none border-2 border-blue-300 hover:border-blue-500 focus:border-black focus:bg-white"
               />
               <div v-if="errors.email" class="text-red-500 text-sm">
                 {{ errors.email }}
@@ -168,7 +168,7 @@ const isCurrUser = computed(() => {
             <td class="p-2">
               <button
                 type="submit"
-                class="bg-gray-300 border-2 border-gray-500 rounded text-black px-3 py-1 hover:bg-twc-green hover:border-twc-green hover:text-white focus:outline-none focus:border-twc-green focus:bg-twc-green focus:text-white"
+                class="p-2 border text-white rounded-lg hover:bg-white hover:text-twc-green"
               >
                 <CheckIcon class="w-6" />
               </button>
