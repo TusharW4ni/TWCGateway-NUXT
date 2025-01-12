@@ -1,129 +1,82 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
 import { CheckIcon } from "@heroicons/vue/24/solid";
-import { toast, type ToastOptions } from "vue3-toastify";
+import { useAdminEditRowStore } from "../stores/useAdminEditRowStore.ts";
+import { useRowClickedStore } from "../stores/useRowClickedStore.ts";
 
-function notify_success(message: string) {
-  toast(message, {
-    autoClose: 3000,
-    position: toast.POSITION.TOP_RIGHT,
-    pauseOnHover: true,
-    transition: "slide",
-    progressStyle: {
-      background: "purple",
-    },
-  } as ToastOptions);
-}
-
-function notify_error(message: string) {
-  toast(message, {
-    autoClose: 3000,
-    position: toast.POSITION.TOP_RIGHT,
-    pauseOnHover: true,
-    transition: "slide",
-    progressStyle: {
-      background: "red",
-    },
-  } as ToastOptions);
-}
+const { notify } = useToast();
 
 const props = defineProps({
   rowData: Object as PropType<any>,
   type: String,
 });
 
-const emits = defineEmits(["save"]);
+const emits = defineEmits(["save", "error"]);
 
-const adminEditedRow = ref({
-  id: props.rowData.id,
-  firstName: props.rowData.firstName || "",
-  lastName: props.rowData.lastName || "",
-  email: props.rowData.email || "",
-});
+const rowClickedStore = useRowClickedStore();
 
-const errors = ref({
-  firstName: "",
-  lastName: "",
-  email: "",
-});
-
-async function adminSaveChanges(event: SubmitEvent) {
-  event.preventDefault();
-  let hasError = false;
-
-  // Reset errors
-  errors.value.firstName = "";
-  errors.value.lastName = "";
-  errors.value.email = "";
-
-  // Validate first name
-  if (!adminEditedRow.value.firstName.trim()) {
-    errors.value.firstName = "First name is required.";
-    notify_error("First name is required.");
-    hasError = true;
-  }
-
-  // Validate last name
-  if (!adminEditedRow.value.lastName.trim()) {
-    errors.value.lastName = "Last name is required.";
-    notify_error("Last name is required.");
-    hasError = true;
-  }
-
-  // Validate email
-  if (adminEditedRow.value.email.trim()) {
-    const isValid = await isValidEmail(adminEditedRow.value.email);
-    if (!isValid) {
-      errors.value.email = "Invalid email address or email already exists.";
-      notify_error("Invalid email address or email already exists.");
-      hasError = true;
-    }
-  } else {
-    errors.value.email = "Email is required.";
-    notify_error("Email is required.");
-    hasError = true;
-  }
-
-  if (!hasError) {
-    emits("save", adminEditedRow.value);
-  }
-}
-
-async function isValidEmail(email: string): boolean {
-  if (!(email === props.rowData.email)) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    // return re.test(email);
-    if (re.test(email)) {
-      try {
-        const response = await $fetch("/api/users/get/adminByEmail", {
-          method: "GET",
-          query: {
-            email,
-          },
-        });
-        console.log({ response });
-        // console.log({ responseBoolean: response.user.id });
-        if (response.user) {
-          return false;
-        } else {
-          return true;
-        }
-      } catch (e) {
-        console.log({ ErrorInTryCatchIsValidEmail: e });
-        return false;
-      }
-    } else {
-      return false;
-    }
-  } else {
-    return true;
-  }
-}
-
+// ------------------ Admin ------------------------- //
+const adminShowingEditRow = useAdminEditRowStore();
 const currUser = useCookie("currentUser");
 const isCurrUser = computed(() => {
   return currUser.value?.email === props.rowData.email;
 });
+
+const adminRow = {
+  id: props.rowData.id,
+  firstName: props.rowData.firstName || "",
+  lastName: props.rowData.lastName || "",
+  email: props.rowData.email || "",
+};
+const adminOgEmail = props.rowData.email;
+
+async function isAdminEmailDuplicate() {
+  try {
+    console.log({ adminOgEmail });
+    console.log({ adminRow });
+    if (adminOgEmail === adminRow.email) {
+      return false;
+    }
+    const user = await $fetch("/api/users/get/adminByEmail", {
+      method: "GET",
+      query: {
+        email: adminRow.email,
+      },
+    });
+    if (user.user === null) {
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.log(e);
+    return true;
+  }
+}
+
+async function isAdminRowValid() {
+  adminRow.firstName = adminRow.firstName.trim();
+  adminRow.lastName = adminRow.lastName.trim();
+  adminRow.email = adminRow.email.trim();
+  if (
+    adminRow.firstName === "" ||
+    adminRow.lastName === "" ||
+    adminRow.email === ""
+  ) {
+    emits("error", "Error in editing admin user: Fields cannot be empty");
+    return false;
+  } else if (await isAdminEmailDuplicate()) {
+    emits("error", "Error in editing admin user: Email is duplicated");
+    return false;
+  }
+  return true;
+}
+
+async function adminSubmit() {
+  if (await isAdminRowValid()) {
+    emits("save", adminRow);
+    adminShowingEditRow.adminEditRow = false;
+    rowClickedStore.rowClicked = false;
+  }
+}
 </script>
 
 <template>
@@ -131,39 +84,30 @@ const isCurrUser = computed(() => {
     v-if="type === 'Admin' && !isCurrUser"
     class="border-2 rounded-lg overflow-auto mt-2 shadow-lg"
   >
-    <form @submit="adminSaveChanges">
+    <form @submit.prevent="adminSubmit()" @keydown.enter.prevent>
       <table class="w-full bg-twc-blue">
         <tbody>
           <tr class="overflow-auto">
             <td class="p-2">
               <input
-                v-model="adminEditedRow.firstName"
+                v-model="adminRow.firstName"
                 type="text"
                 class="p-2 rounded-lg bg-gray-200 outline-none border-2 border-blue-300 hover:border-blue-500 focus:border-black focus:bg-white"
               />
-              <div v-if="errors.firstName" class="text-red-500 text-sm">
-                {{ errors.firstName }}
-              </div>
             </td>
             <td class="p-2">
               <input
-                v-model="adminEditedRow.lastName"
+                v-model="adminRow.lastName"
                 type="text"
                 class="p-2 rounded-lg bg-gray-200 outline-none border-2 border-blue-300 hover:border-blue-500 focus:border-black focus:bg-white"
               />
-              <div v-if="errors.lastName" class="text-red-500 text-sm">
-                {{ errors.lastName }}
-              </div>
             </td>
             <td class="p-2">
               <input
-                v-model="adminEditedRow.email"
+                v-model="adminRow.email"
                 type="email"
                 class="p-2 rounded-lg bg-gray-200 outline-none border-2 border-blue-300 hover:border-blue-500 focus:border-black focus:bg-white"
               />
-              <div v-if="errors.email" class="text-red-500 text-sm">
-                {{ errors.email }}
-              </div>
             </td>
             <td class="p-2">
               <button
@@ -182,16 +126,17 @@ const isCurrUser = computed(() => {
     v-if="type === 'Admin' && isCurrUser"
     class="border-2 rounded-lg overflow-auto mt-2 shadow-lg"
   >
-    <form>
-      <table class="w-full bg-blue-100">
-        <tbody>
-          <tr class="overflow-auto flex justify-center items-center p-2">
-            <td class="text-red-400 uppercase" colspan="3">
-              Cannot Edit Yourself
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </form>
+    <table class="w-full bg-twc-blue">
+      <tbody>
+        <tr class="overflow-auto flex justify-center items-center p-2">
+          <td
+            class="text-red-400 uppercase font-bold text-sm tracking-wide"
+            colspan="3"
+          >
+            <div class="bg-red-100 p-2 rounded">Cannot Edit Yourself</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>

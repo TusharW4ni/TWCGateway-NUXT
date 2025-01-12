@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { User } from "@prisma/client";
 import { useToast } from "../../../composables/useToast.ts";
+import { useAdminEditRowStore } from "../../../stores/useAdminEditRowStore.ts";
 const { notify } = useToast();
 
 // ------------------ Admin ------------------------- //
@@ -8,6 +9,9 @@ const adminHeaders = ["First Name", "Last Name", "Email"];
 const adminCurrentPage = ref(1);
 const adminPageSize = ref(3);
 const adminSearchString = ref("");
+const adminShowingEditRow = useAdminEditRowStore();
+// const adminIsEditingRow = ref(false);
+const adminEditingRowData = ref(null);
 
 const adminsLoading = ref(false);
 const admins = await useFetch(`/api/users/get/admins`, {
@@ -24,7 +28,7 @@ const admins = await useFetch(`/api/users/get/admins`, {
   },
   onRequestError({ error }) {
     console.log({ adminsOnRequestError: error });
-    notify("Error fetching all admin users (onRequestError).", "error");
+    // notify("Error fetching all admin users (onRequestError).", "error");
   },
   onResponseError() {
     notify("Error fetching all admin users (onResponseError).", "error");
@@ -44,10 +48,10 @@ const adminTotalPages = await useFetch(`/api/users/get/admins-totalPages`, {
     adminTotalPagesLoading.value = false;
   },
   onRequestError() {
-    notify(
-      "Error fetching total pages for admin table pagination (onRequestError).",
-      "error"
-    );
+    // notify(
+    //   "Error fetching total pages for admin table pagination (onRequestError).",
+    //   "error"
+    // );
   },
   onResponseError() {
     notify(
@@ -94,6 +98,40 @@ async function adminNewUser(adminRow: any) {
 function adminAddRowError(error: string) {
   notify(error, "error");
 }
+
+function toggleAdminEditingRow(row: any) {
+  console.log({ row });
+  if (row) {
+    adminShowingEditRow.adminEditRow = true;
+    adminEditingRowData.value = row;
+  } else {
+    adminShowingEditRow.adminEditRow = false;
+    adminEditingRowData.value = null;
+  }
+}
+
+function adminEditRowError(error: string) {
+  notify(error, "error");
+}
+
+async function adminEditSave(row: any) {
+  try {
+    await $fetch("/api/users/put/admin", {
+      method: "PUT",
+      body: {
+        id: row.id,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        email: row.email,
+      },
+    });
+    admins.refresh();
+    notify("Edited admin user successfully.", "success");
+  } catch (e) {
+    console.log(e);
+    notify("Error editing admin user.", "error");
+  }
+}
 </script>
 
 <template>
@@ -120,8 +158,13 @@ function adminAddRowError(error: string) {
             :rows="admins.data.value.admins"
             :loading="adminsLoading"
             @search="updateAdminSearchString"
+            @edit="toggleAdminEditingRow"
+            @close-edit="toggleAdminEditingRow"
+            @edit-save="adminEditSave"
+            @edit-error="adminEditRowError"
           />
           <AddRow
+            v-if="!adminShowingEditRow.adminEditRow"
             :type="'Admin'"
             @submit="adminNewUser"
             @error="adminAddRowError"

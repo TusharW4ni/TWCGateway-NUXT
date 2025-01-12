@@ -6,6 +6,7 @@ import {
   MagnifyingGlassIcon,
   ChevronUpIcon,
   ChevronDownIcon,
+  NoSymbolIcon,
 } from "@heroicons/vue/24/solid";
 import { useRowClickedStore } from "../stores/useRowClickedStore.ts";
 import { useAddRowStore } from "../stores/useAddRowStore.ts";
@@ -15,6 +16,8 @@ const props = defineProps<{
   rows: Row[];
   loading: boolean;
 }>();
+
+console.log({ rows: props.rows });
 
 type Row = {
   [key: string]: any;
@@ -36,7 +39,14 @@ const rowClickedStore = useRowClickedStore();
 const addRowStore = useAddRowStore();
 const isRowClicked = <Row>ref("");
 const isEditing = ref(false);
-const emits = defineEmits(["edit", "close-edit", "search"]);
+const editingRowData = <Row>ref(null);
+const emits = defineEmits([
+  "edit",
+  "close-edit",
+  "search",
+  "edit-save",
+  "edit-error",
+]);
 const showSearch = ref(false);
 const searchString = ref("");
 
@@ -59,7 +69,9 @@ function unclickRow() {
 
 function clickEdit(row: Row) {
   isEditing.value = true;
-  emits("edit", row);
+  editingRowData.value = row;
+  console.log({ editingRowData });
+  // emits("edit", row);
 }
 
 function toggleSearch() {
@@ -82,6 +94,15 @@ function submitSearch() {
 watch([searchString], () => {
   submitSearch();
 });
+
+function emitEditSave(row: Row) {
+  emits("edit-save", row);
+  unclickRow();
+}
+
+function emitEditError(error: string) {
+  emits("edit-error", error);
+}
 </script>
 
 <template>
@@ -197,9 +218,24 @@ watch([searchString], () => {
           </td>
         </tr>
       </tbody>
-      <tbody v-if="!loading && !headers">
-        dfdf
+      <tbody v-if="!loading && props.rows.length === 0">
+        <tr>
+          <td :colspan="props.headers.length" class="p-2">
+            <div
+              class="flex justify-center items-center uppercase text-sm tracking-wide font-bold space-x-3"
+            >
+              No Items Found
+            </div>
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>
+  <EditRow
+    v-if="isEditing"
+    :type="'Admin'"
+    :rowData="editingRowData"
+    @save="emitEditSave"
+    @error="emitEditError"
+  />
 </template>
