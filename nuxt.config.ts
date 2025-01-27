@@ -9,6 +9,9 @@ export default defineNuxtConfig({
     AUTH0_CLIENT_ID: "",
     AUTH0_SECRET: "",
     SERVER_BASE_URL: "",
+    public: {
+      SERVER_BASE_URL: "",
+    },
   },
   app: {
     head: {

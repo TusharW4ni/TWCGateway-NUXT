@@ -8,8 +8,14 @@ export function useToast() {
       pauseOnHover: true,
       transition: "slide",
       progressStyle: {
-        background: type === "success" ? "purple" : "red",
+        background: type === "success" ? "green" : "red",
       },
+      toastStyle: {
+        color: type === "success" ? "lightgreen" : "red",
+        border: "1px solid white",
+      },
+      theme: "dark",
+      closeOnClick: true,
     };
 
     toast(message, options);

@@ -1,31 +1,33 @@
-<script setup lang="js">
-import Table from './Table.vue';
+<script lang="ts" setup>
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/vue/24/solid";
 
-import {
-  ChevronDownIcon,
-  ChevronUpIcon,
-} from "@heroicons/vue/24/solid";
+const props = defineProps<{
+  summary: string;
+}>();
 
-const props = defineProps({
-  summary: String,
-  details: Table,
-});
+const isOpen = ref(true);
+
+function toggleOpen() {
+  isOpen.value = !isOpen.value;
+}
 </script>
 
 <template>
-  <details class="p-3 group" open="true">
-    <summary
-      class="bg-twc-yellow text-black p-3 list-none flex items-center cursor-pointer"
-    >
-      <span class="group-open:hidden">
-        <ChevronDownIcon class="w-6" />
-      </span>
-      <span class="hidden group-open:inline">
-        <ChevronUpIcon class="w-6" />
-      </span>
-      <span class="ml-2">{{ summary }}</span>
+  <details
+    :open="isOpen"
+    @toggle="toggleOpen"
+    class="bg-yellow-100 text-black rounded my-3"
+  >
+    <summary class="flex cursor-pointer bg-twc-yellow text-black rounded p-2">
+      <component
+        :is="isOpen ? ChevronUpIcon : ChevronDownIcon"
+        class="flex justify-center items-center w-6 h-6"
+      />
+      <div class="flex w-full justify-center items-center">
+        {{ props.summary }}
+      </div>
     </summary>
-    <div class="bg-[#fcf4c3] rounded-b-lg text-black p-3">
+    <div class="p-2">
       <slot />
     </div>
   </details>
