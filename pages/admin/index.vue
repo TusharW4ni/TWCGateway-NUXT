@@ -1,3 +1,3 @@
-<script setup>
-navigateTo("/admin/users");
+<script setup lang="ts">
+await navigateTo("/admin/users");
 </script>

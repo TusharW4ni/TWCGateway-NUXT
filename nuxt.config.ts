@@ -1,9 +1,14 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
-  devtools: { enabled: true },
+  devtools: { enabled: false },
   css: ["~/app.css"],
-  modules: ["@nuxtjs/tailwindcss", "@prisma/nuxt", "@pinia/nuxt"],
+  modules: [
+    "@nuxtjs/tailwindcss",
+    "@prisma/nuxt",
+    "@pinia/nuxt",
+    "@nuxt/image",
+  ],
   runtimeConfig: {
     AUTH0_DOMAIN: "",
     AUTH0_CLIENT_ID: "",
@@ -17,5 +22,9 @@ export default defineNuxtConfig({
     head: {
       link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.svg" }],
     },
+  },
+  devServer: {
+    port: 3000,
+    host: "0.0.0.0", // This allows connections from any IP
   },
 });

@@ -14,7 +14,7 @@ function toggleOpen() {
 
 <template>
   <details
-    :open="isOpen"
+    :open="true"
     @toggle="toggleOpen"
     class="bg-yellow-100 text-black rounded my-3"
   >

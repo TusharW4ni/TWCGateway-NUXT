@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-// pagination, search, add, edit, and delete would like to do all in table.
 import {
   MagnifyingGlassIcon,
   ChevronLeftIcon,
@@ -7,22 +6,18 @@ import {
   XMarkIcon,
   PencilSquareIcon,
   TrashIcon,
-  CheckIcon,
+  PlusIcon,
 } from "@heroicons/vue/24/solid";
 import Input from "@/components/Input.vue";
 
 const props = defineProps<{
   headers: string[];
   data: any[];
+  type: string;
   loading: boolean;
   currentPage: number;
   totalPages: number;
 }>();
-
-const searchQuery = ref("");
-const selectedRow = ref(null);
-const isDataEmpty = ref(false);
-const trashClickedOn = ref(null);
 
 const emits = defineEmits<{
   (event: "prevPage"): void;
@@ -30,6 +25,15 @@ const emits = defineEmits<{
   (event: "searchString", value: string): void;
   (event: "deleteRow", value: object): void;
 }>();
+
+const searchQuery = ref("");
+const selectedRow = ref(null);
+const isDataEmpty = ref(false);
+const addingRow = ref(false);
+
+const disablePagination = ref(false);
+const disableSearch = ref(false);
+const trashClickedOn = ref(null);
 
 watch(searchQuery, (newVal) => {
   emits("searchString", newVal);
@@ -40,13 +44,10 @@ watch(
   (newData) => {
     if (newData.length === 0) {
       isDataEmpty.value = true;
-      console.log("data is empty");
     } else {
       isDataEmpty.value = false;
-      console.log("data is not empty");
     }
-  },
-  { deep: true }
+  }
 );
 
 const mapHeaderToKey = (header: string) => {
@@ -57,6 +58,8 @@ const mapHeaderToKey = (header: string) => {
 };
 
 function handleRowClick(row: any) {
+  if (addingRow.value) return;
+  disableSearch.value = true;
   if (selectedRow.value === null) {
     selectedRow.value = row;
     console.log("selectedRow", selectedRow.value);
@@ -83,13 +86,14 @@ function handleDeleteConfirmed(row: any) {
 </script>
 
 <template>
+  <!-- Pagination -->
   <div
     class="flex justify-center items-center p-2 rounded-t bg-white border-l border-r border-t border-black space-x-1"
   >
     <button
       class="py-1 px-2 rounded hover:bg-gray-300 disabled:text-gray-300 disabled:hover:bg-white disabled:cursor-not-allowed"
       @click="handlePrevPage"
-      :disabled="props.currentPage === 1"
+      :disabled="props.currentPage === 1 || disablePagination"
     >
       <ChevronLeftIcon class="w-6 h-6" />
     </button>
@@ -101,27 +105,31 @@ function handleDeleteConfirmed(row: any) {
     <button
       class="py-1 px-2 rounded hover:bg-gray-300 disabled:text-gray-300 disabled:hover:bg-white disabled:cursor-not-allowed"
       @click="handleNextPage"
-      :disabled="props.currentPage === props.totalPages"
+      :disabled="props.currentPage === props.totalPages || disablePagination"
     >
       <ChevronRightIcon class="w-6 h-6" />
     </button>
   </div>
 
+  <!-- Search -->
   <div class="flex p-2 bg-white border-l border-r border-t border-black">
-    <MagnifyingGlassIcon class="w-6 h-6 mr-2" />
+    <MagnifyingGlassIcon
+      :class="disableSearch ? 'w-6 h-6 mr-2 text-gray-300' : 'w-6 h-6 mr-2'"
+    />
     <Input
+      :class="'w-full'"
       placeholder="Search"
       v-model:modelValue="searchQuery"
-      :isDisabled="selectedRow ? true : false"
+      :isDisabled="disableSearch"
     />
   </div>
 
   <div class="overflow-auto">
+    <!-- Table -->
     <table class="min-w-full bg-white border border-black">
       <thead class="bg-gray-500">
         <tr>
-          <th v-if="selectedRow"></th>
-          <th v-if="selectedRow"></th>
+          <th v-if="selectedRow || addingRow"></th>
           <th
             v-for="header in props.headers"
             :key="header"
@@ -129,37 +137,74 @@ function handleDeleteConfirmed(row: any) {
           >
             {{ header }}
           </th>
-          <th v-if="selectedRow"></th>
+          <th v-if="addingRow"></th>
         </tr>
       </thead>
-      <tbody v-if="!isDataEmpty && !props.loading">
+
+      <!-- Data loading -->
+      <tbody v-if="props.loading">
+        <tr>
+          <td :colspan="props.headers.length" class="py-4">
+            <div class="flex justify-center items-center">
+              <img src="/assets/blocks-shuffle-3.svg" alt="Loading..." />
+            </div>
+          </td>
+        </tr>
+      </tbody>
+
+      <!-- Show data -->
+      <tbody v-if="!isDataEmpty && !props.loading" class="">
         <tr
           v-for="row in props.data"
           :key="row.email"
           :class="
-            selectedRow
-              ? 'bg-white'
+            selectedRow || addingRow
+              ? selectedRow === row
+                ? 'bg-gray-300'
+                : 'bg-white'
               : 'bg-white cursor-pointer hover:bg-gray-100'
           "
           @click="handleRowClick(row)"
         >
-          <td v-if="selectedRow" class="px-4 py-2 border-t border-gray-300">
-            <button
-              v-if="selectedRow === row"
-              class="p-1 rounded-md bg-gray-200 hover:bg-gray-300"
-              @click.stop="selectedRow = null"
-            >
-              <XMarkIcon class="w-6 mx-auto" />
-            </button>
+          <td
+            v-if="addingRow"
+            class="px-4 py-2 border-t border-gray-300 text-center"
+          ></td>
+          <td
+            v-if="selectedRow"
+            :class="
+              selectedRow === row
+                ? 'px-4 py-2 border-t border-gray-300 bg-gray-500'
+                : 'px-4 py-2 border-t border-gray-300'
+            "
+          >
+            <div class="flex space-x-3 md:space-x-0 md:justify-between">
+              <button
+                v-if="selectedRow === row"
+                class="p-1 rounded-md bg-gray-200 hover:bg-gray-300"
+                @click.stop="
+                  selectedRow = null;
+                  disableSearch = false;
+                "
+              >
+                <XMarkIcon class="w-6" />
+              </button>
+              <button
+                v-if="selectedRow === row"
+                class="px-7 rounded-md bg-gray-200 hover:bg-gray-300"
+              >
+                <PencilSquareIcon class="w-6" />
+              </button>
+              <button
+                v-if="selectedRow === row"
+                class="p-1 rounded-md bg-gray-200 hover:bg-red-300"
+                @click.stop="trashClickedOn = row"
+              >
+                <TrashIcon class="w-6" />
+              </button>
+            </div>
           </td>
-          <td v-if="selectedRow" class="px-4 py-2 border-t border-gray-300">
-            <button
-              v-if="selectedRow === row"
-              class="p-1 rounded-md bg-gray-200 hover:bg-gray-300"
-            >
-              <PencilSquareIcon class="w-6 mx-auto" />
-            </button>
-          </td>
+
           <td
             v-for="header in props.headers"
             :key="header"
@@ -167,17 +212,39 @@ function handleDeleteConfirmed(row: any) {
           >
             {{ row[mapHeaderToKey(header)] }}
           </td>
-          <td v-if="selectedRow" class="px-4 py-2 border-t border-gray-300">
-            <button
-              v-if="selectedRow === row"
-              class="p-1 rounded-md bg-gray-200 hover:bg-red-300"
-              @click.stop="trashClickedOn = row"
-            >
-              <TrashIcon class="w-6" />
-            </button>
+          <td
+            v-if="addingRow"
+            class="px-4 py-2 border-t border-gray-300 text-center"
+          ></td>
+        </tr>
+        <tr>
+          <td :colspan="props.headers.length + 2">
+            <div v-if="!selectedRow && !addingRow" class="mt-1">
+              <button
+                @click="
+                  addingRow = true;
+                  disablePagination = true;
+                  disableSearch = true;
+                "
+                class="flex justify-center items-center w-full border border-gray-200 rounded hover:bg-gray-200 hover:border-black"
+              >
+                <PlusIcon class="w-6 h-6" />
+              </button>
+            </div>
+            <AddRow
+              v-if="addingRow"
+              :type="props.type"
+              @cancelAddRow="
+                addingRow = false;
+                disablePagination = false;
+                disableSearch = false;
+              "
+            />
           </td>
         </tr>
       </tbody>
+
+      <!-- No data available -->
       <tbody v-if="isDataEmpty && !props.loading">
         <tr>
           <td
@@ -188,16 +255,9 @@ function handleDeleteConfirmed(row: any) {
           </td>
         </tr>
       </tbody>
-      <tbody v-if="props.loading">
-        <tr>
-          <td :colspan="props.headers.length" class="py-4">
-            <div class="flex justify-center items-center">
-              <img src="/assets/blocks-shuffle-3.svg" alt="Loading..." />
-            </div>
-          </td>
-        </tr>
-      </tbody>
     </table>
+
+    <!-- Delete Model -->
     <div
       v-if="trashClickedOn"
       class="bg-black bg-opacity-50 fixed top-0 left-0 w-screen h-screen flex justify-center items-center"

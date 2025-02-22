@@ -1,4 +1,8 @@
 <script setup lang="ts">
+definePageMeta({
+  title: "Users",
+});
+
 const { notify } = useToast();
 
 const onEmHeaders = ["First Name", "Last Name", "Email", "Department"];
@@ -44,10 +48,11 @@ function deleteOnEm(row: any) {
 
 <template>
   <div>
-    <Admin-Navbar />
+    <Navbar />
     <div class="p-3 md:w-full md:flex md:flex-col md:items-center">
       <Details :summary="'Onboarding Employees'" class="md:w-3/4">
         <Table
+          :type="'Onboarding Employee'"
           :headers="onEmHeaders"
           :data="onEmData.data.value.employees"
           :loading="onEmDataLoading"

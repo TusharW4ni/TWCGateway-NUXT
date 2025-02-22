@@ -1,6 +1,6 @@
 <script setup lang="ts"></script>
 
 <template>
-  <Admin-Navbar />
-  <div>Hello</div>
+  <Navbar :type="'Admin'" />
+  <div class="text-white">Hello</div>
 </template>
