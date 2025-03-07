@@ -7,6 +7,7 @@ import {
   PencilSquareIcon,
   TrashIcon,
   PlusIcon,
+  ArrowTopRightOnSquareIcon,
 } from "@heroicons/vue/24/solid";
 import Input from "@/components/Input.vue";
 
@@ -83,6 +84,12 @@ function handleDeleteConfirmed(row: any) {
   emits("deleteRow", row);
   trashClickedOn.value = null;
 }
+
+async function handleNavigateTo(row: any) {
+  console.log(selectedRow);
+  selectedRow.value = null;
+  await navigateTo(`/onboarding-employee/${row.id}`);
+}
 </script>
 
 <template>
@@ -138,6 +145,7 @@ function handleDeleteConfirmed(row: any) {
             {{ header }}
           </th>
           <th v-if="addingRow"></th>
+          <th v-if="selectedRow"></th>
         </tr>
       </thead>
 
@@ -197,10 +205,10 @@ function handleDeleteConfirmed(row: any) {
               </button>
               <button
                 v-if="selectedRow === row"
-                class="p-1 rounded-md bg-gray-200 hover:bg-red-300"
-                @click.stop="trashClickedOn = row"
+                @click.stop="handleNavigateTo(row)"
+                class="px-7 rounded-md bg-gray-200 hover:bg-gray-300"
               >
-                <TrashIcon class="w-6" />
+                <ArrowTopRightOnSquareIcon class="w-6" />
               </button>
             </div>
           </td>
@@ -211,6 +219,24 @@ function handleDeleteConfirmed(row: any) {
             class="px-4 py-2 border-t border-gray-300 text-center"
           >
             {{ row[mapHeaderToKey(header)] }}
+          </td>
+          <td
+            v-if="selectedRow"
+            :class="
+              selectedRow === row
+                ? 'px-4 py-2 border-t border-gray-300 bg-gray-500'
+                : 'px-4 py-2 border-t border-gray-300'
+            "
+          >
+            <div class="flex space-x-3 md:space-x-0 md:justify-between">
+              <button
+                v-if="selectedRow === row"
+                class="p-1 rounded-md bg-gray-200 hover:bg-red-300"
+                @click.stop="trashClickedOn = row"
+              >
+                <TrashIcon class="w-6" />
+              </button>
+            </div>
           </td>
           <td
             v-if="addingRow"

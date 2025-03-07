@@ -34,6 +34,7 @@ export default defineEventHandler(async (event) => {
           ...searchCondition,
         },
         select: {
+          id: true,
           firstName: true,
           lastName: true,
           email: true,
@@ -63,6 +64,7 @@ export default defineEventHandler(async (event) => {
     ]);
     console.log("onboardingEmployees", onboardingEmployees);
     const transformedEmployees = onboardingEmployees.map((employee) => ({
+      id: employee.id,
       firstName: employee.firstName,
       lastName: employee.lastName,
       email: employee.email,
@@ -77,7 +79,7 @@ export default defineEventHandler(async (event) => {
       pageSize,
       totalPages: Math.ceil(total / pageSize),
     };
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
     setResponseStatus(event, 500);
     return { error: e.message };

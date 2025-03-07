@@ -1,124 +1,46 @@
 import { PrismaClient } from "@prisma/client";
+
 const prisma = new PrismaClient();
 
 async function main() {
-  // admins
-  await prisma.user.createMany({
-    data: [
-      {
-        firstName: "Tushar",
-        lastName: "Wani",
-        email: "reachtusharwani@gmail.com",
-        role: "Admin",
-      },
-      {
-        firstName: "adm",
-        lastName: "in1",
-        email: "admin1@admins.com",
-        role: "Admin",
-      },
-      {
-        firstName: "adm",
-        lastName: "in2",
-        email: "admin2@admins.com",
-        role: "Admin",
-      },
-    ],
+  // Admin
+  await prisma.user.create({
+    data: {
+      firstName: "admin",
+      lastName: "user",
+      email: "admin@test.com",
+      role: "Admin",
+    },
   });
 
-  // departments
+  // Departments
+  const departmentsData = Array.from({ length: 10 }, (_, i) => ({
+    name: `Department${i + 1}`,
+  }));
+
   await prisma.department.createMany({
-    data: [
-      {
-        name: "Department1",
-      },
-      {
-        name: "Department2",
-      },
-      {
-        name: "Department3",
-      },
-      {
-        name: "Department4",
-      },
-      {
-        name: "Department5",
-      },
-      {
-        name: "Department6",
-      },
-      {
-        name: "Department7",
-      },
-      {
-        name: "Department8",
-      },
-      {
-        name: "Department9",
-      },
-      {
-        name: "Department10",
-      },
-    ],
+    data: departmentsData,
   });
 
-  // tasks
+  // Tasks
+  const tasksData = Array.from({ length: 10 }, (_, i) => ({
+    description: `Long description of task ${
+      i + 1
+    }. It is a very long description of task ${
+      i + 1
+    }. It just talks about how long the description of task ${
+      i + 1
+    } is. It keeps going on about how long the description of task ${
+      i + 1
+    } is.`,
+    departmentId: 1,
+  }));
+
   await prisma.task.createMany({
-    data: [
-      {
-        description:
-          "Long description of task 1. It is a very long description of task 1. It just talks about how long the description of task 1 is. It keeps going on about how long the description of task 1 is.",
-        departmentId: 1,
-      },
-      {
-        description:
-          "Long description of task 2. It is a very long description of task 2. It just talks about how long the description of task 2 is. It keeps going on about how long the description of task 2 is.",
-        departmentId: 1,
-      },
-      {
-        description:
-          "Long description of task 3. It is a very long description of task 3. It just talks about how long the description of task 3 is. It keeps going on about how long the description of task 3 is.",
-        departmentId: 1,
-      },
-      {
-        description:
-          "Long description of task 4. It is a very long description of task 4. It just talks about how long the description of task 4 is. It keeps going on about how long the description of task 4 is.",
-        departmentId: 1,
-      },
-      {
-        description:
-          "Long description of task 5. It is a very long description of task 5. It just talks about how long the description of task 5 is. It keeps going on about how long the description of task 5 is.",
-        departmentId: 1,
-      },
-      {
-        description:
-          "Long description of task 6. It is a very long description of task 6. It just talks about how long the description of task 6 is. It keeps going on about how long the description of task 6 is.",
-        departmentId: 1,
-      },
-      {
-        description:
-          "Long description of task 7. It is a very long description of task 7. It just talks about how long the description of task 7 is. It keeps going on about how long the description of task 7 is.",
-        departmentId: 1,
-      },
-      {
-        description:
-          "Long description of task 8. It is a very long description of task 8. It just talks about how long the description of task 8 is. It keeps going on about how long the description of task 8 is.",
-        departmentId: 1,
-      },
-      {
-        description:
-          "Long description of task 9. It is a very long description of task 9. It just talks about how long the description of task 9 is. It keeps going on about how long the description of task 9 is.",
-        departmentId: 1,
-      },
-      {
-        description:
-          "Long description of task 10. It is a very long description of task 10. It just talks about how long the description of task 10 is. It keeps going on about how long the description of task 10 is.",
-        departmentId: 1,
-      },
-    ],
+    data: tasksData,
   });
 
-  // onboarding employee and department assignment
+  // Employees
   const employees = Array.from({ length: 10 }, (_, i) => ({
     firstName: `ON${i + 1}`,
     lastName: `EM${i + 1}`,
@@ -126,53 +48,92 @@ async function main() {
     role: "Onboarding Employee",
   }));
 
-  const createdUsers = await prisma.user.createMany({
+  await prisma.user.createMany({
     data: employees,
   });
 
-  const userIds = await prisma.user.findMany({
+  // Onboarding Employees
+  const employeeUsers = await prisma.user.findMany({
     where: {
-      email: {
-        in: employees.map((e) => e.email),
-      },
+      role: "Onboarding Employee",
     },
     select: {
       id: true,
     },
   });
 
-  const onboardingEmployees = userIds.map((user, i) => ({
+  const onboardingEmployees = employeeUsers.map((user) => ({
     userId: user.id,
     departmentId: 1,
   }));
 
-  const createdOnboardingEmployees = await prisma.onboardingEmployee.createMany(
-    {
-      data: onboardingEmployees,
-    }
+  await prisma.onboardingEmployee.createMany({
+    data: onboardingEmployees,
+  });
+
+  // Onboarding Task Assignments
+  const onboardingEmployeeRecords = await prisma.onboardingEmployee.findMany({
+    select: {
+      id: true,
+    },
+  });
+
+  const onEmTaskAssignments = onboardingEmployeeRecords.flatMap((onEm) =>
+    Array.from({ length: 10 }, (_, i) => ({
+      taskId: i + 1, // Assuming taskId 1 to 10 exists
+      onboardingEmployeeId: onEm.id,
+    }))
   );
 
-  const onboardingEmployeeIds = await prisma.onboardingEmployee.findMany({
+  await prisma.onEmTaskAssignment.createMany({
+    data: onEmTaskAssignments,
+  });
+
+  // Supervisors
+  const supervisors = Array.from({ length: 10 }, (_, i) => ({
+    firstName: `SUPER${i + 1}`,
+    lastName: `VISOR${i + 1}`,
+    email: `super${i + 1}@visor.com`,
+    role: "Supervisor",
+  }));
+
+  await prisma.user.createMany({
+    data: supervisors,
+  });
+
+  // Supervisor Task Assignments
+  const supervisorUsers = await prisma.user.findMany({
     where: {
-      userId: {
-        in: userIds.map((u) => u.id),
-      },
+      role: "Supervisor",
     },
     select: {
       id: true,
     },
   });
 
-  const taskAssignments = onboardingEmployeeIds.flatMap((onEm) =>
-    Array.from({ length: 10 }, (_, i) => ({
-      taskId: i + 1,
-      onboardingEmployeeId: onEm.id,
-    }))
+  const supervisorTaskAssignmentsData = supervisorUsers.map(
+    (supervisor, index) => ({
+      userId: supervisor.id,
+    })
   );
 
-  await prisma.taskAssignment.createMany({
-    data: taskAssignments,
+  await prisma.supervisorTaskAssignment.createMany({
+    data: supervisorTaskAssignmentsData,
   });
+
+  const supervisorTaskAssignments =
+    await prisma.supervisorTaskAssignment.findMany();
+
+  for (let i = 0; i < supervisorTaskAssignments.length; i++) {
+    await prisma.task.update({
+      where: {
+        id: i + 1,
+      },
+      data: {
+        supervisorTaskAssignmentId: supervisorTaskAssignments[i].id,
+      },
+    });
+  }
 }
 
 main()

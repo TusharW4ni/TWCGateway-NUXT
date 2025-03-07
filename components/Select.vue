@@ -9,8 +9,19 @@ import {
 
 const props = defineProps<{
   type: string;
+  options: [
+    {
+      id: number;
+      title: string;
+    }
+  ];
 }>();
 
+const emits = defineEmits<{
+  (e: "update:modelValue", value: string): void;
+}>();
+
+// had to write this because HOME and END keys were not working in the input
 const handleKeydown = (event: KeyboardEvent) => {
   const input = event.target as HTMLInputElement;
 
@@ -24,41 +35,31 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 };
 
-const people = [
-  "Basic Onboarding",
-  "Clinic",
-  "Department 3",
-  "Department 4",
-  "Long Department Name 5 Long Department Name 5 Long Department Name 5 Long Department Name 5 Long Department Name 5 Long Department Name 5 ",
-  "Department 4",
-  "Department 4",
-  "Department 4",
-  "Department 4",
-  "Department 4",
-  "Department 4",
-  "Department 4",
-  "Department 4",
-  "Department 4",
-  "Department 4",
-  "Department 4",
-  "Department 4",
-];
-
 const buttonClicked = ref(false);
-const selected = ref(people[0]);
+
+const selected = ref(props.options[0].title);
 const query = ref("");
 
-const filteredPeople = computed(() =>
+const filteredOptions = computed(() =>
   query.value === ""
-    ? people
-    : people.filter((person) => {
-        return person.toLowerCase().includes(query.value.toLowerCase());
+    ? props.options
+    : props.options.filter((option) => {
+        return option.title.toLowerCase().includes(query.value.toLowerCase());
       })
 );
 
 watch(selected, () => {
-  buttonClicked.value = false;
+  const department = props.options.filter((option) => {
+    return option.title.includes(selected.value);
+  });
+  const departmentId = department[0].id.toString();
+  updateSelected(departmentId);
 });
+
+function updateSelected(newValue: string) {
+  emits("update:modelValue", newValue);
+  buttonClicked.value = false;
+}
 </script>
 
 <template>
@@ -93,16 +94,16 @@ watch(selected, () => {
           class="mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm"
         >
           <div
-            v-if="filteredPeople.length === 0 && query !== ''"
+            v-if="filteredOptions.length === 0 && query !== ''"
             class="relative cursor-default select-none px-4 py-2 text-gray-700"
           >
             Nothing found.
           </div>
 
           <ComboboxOption
-            v-for="person in filteredPeople"
-            :key="person"
-            :value="person"
+            v-for="option in filteredOptions"
+            :key="option.id"
+            :value="option.title"
             v-slot="{ selected, active }"
           >
             <li
@@ -116,7 +117,7 @@ watch(selected, () => {
                 class="block truncate"
                 :class="{ 'font-medium': selected, 'font-normal': !selected }"
               >
-                {{ person }}
+                {{ option.title }}
               </span>
               <span
                 v-if="selected"
