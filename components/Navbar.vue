@@ -3,6 +3,8 @@ import {
   ArrowRightStartOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
+  UserIcon,
+  BuildingOffice2Icon,
 } from "@heroicons/vue/24/solid";
 
 const isLoggingOut = ref(false);
@@ -28,24 +30,33 @@ async function handleButtonClicked(button: string) {
       <div class="flex items-center w-full overflow-auto p-3">
         <button
           @click="handleButtonClicked('users')"
-          class="px-4 py-2 md:mx-3 rounded-lg hover:bg-gray-800 hidden md:block"
+          class="px-4 py-2 md:mx-3 rounded-lg hover:bg-gray-500 hidden md:block"
         >
-          Users
+          <div class="flex items-center justify-center space-x-2">
+            <span class=""><UserIcon class="w-6" /></span>
+            <span class="text-lg font-semibold"> Users </span>
+          </div>
         </button>
         <button
           @click="handleButtonClicked('departments')"
-          class="px-4 py-2 md:mx-3 rounded-lg hover:bg-gray-800 hidden md:block"
+          class="px-4 py-2 md:mx-3 rounded-lg hover:bg-gray-500 hidden md:block"
         >
-          Departments
+          <div class="flex items-center justify-center space-x-2">
+            <span class=""><BuildingOffice2Icon class="w-6" /></span>
+            <span class="text-lg font-semibold"> Departments </span>
+          </div>
         </button>
       </div>
       <div class="flex justify-center items-center p-3">
         <button
           v-if="!isLoggingOut"
           @click="handleButtonClicked('logout')"
-          class="px-4 py-2 mx-3 rounded-lg hover:bg-gray-800 hidden md:block"
+          class="px-4 py-2 mx-3 rounded-lg hover:bg-red-500 hidden md:block"
         >
-          <ArrowRightStartOnRectangleIcon class="w-6 h-6" />
+          <div class="flex items-center justify-center space-x-2">
+            <span class=""><ArrowRightStartOnRectangleIcon class="w-6" /></span>
+            <span class="text-lg font-semibold"> Logout </span>
+          </div>
         </button>
         <button
           v-else
@@ -89,7 +100,10 @@ async function handleButtonClicked(button: string) {
             "
             class="w-full text-left px-4 py-2 text-white hover:bg-gray-800 rounded-lg"
           >
-            Users
+            <div class="flex items-center space-x-2">
+              <span class=""><UserIcon class="w-6" /></span>
+              <span class="text-lg font-semibold"> Users </span>
+            </div>
           </button>
           <button
             @click="
@@ -98,7 +112,10 @@ async function handleButtonClicked(button: string) {
             "
             class="w-full text-left px-4 py-2 text-white hover:bg-gray-800 rounded-lg"
           >
-            Departments
+            <div class="flex items-center space-x-2">
+              <span class=""><BuildingOffice2Icon class="w-6" /></span>
+              <span class="text-lg font-semibold"> Departments </span>
+            </div>
           </button>
           <button
             @click="
@@ -107,7 +124,12 @@ async function handleButtonClicked(button: string) {
             "
             class="w-full text-left px-4 py-2 text-white hover:bg-red-600 rounded-lg"
           >
-            Logout
+            <div class="flex items-center space-x-2">
+              <span class=""
+                ><ArrowRightStartOnRectangleIcon class="w-6"
+              /></span>
+              <span class="text-lg font-semibold"> Logout </span>
+            </div>
           </button>
         </div>
       </div>
