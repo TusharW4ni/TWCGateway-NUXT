@@ -13,9 +13,9 @@ export default defineNuxtConfig({
     AUTH0_DOMAIN: "",
     AUTH0_CLIENT_ID: "",
     AUTH0_SECRET: "",
-    SERVER_BASE_URL: "",
+    SERVER_BASE_URL: process.env.SERVER_BASE_URL || "http://localhost:3000/",
     public: {
-      SERVER_BASE_URL: "",
+      SERVER_BASE_URL: process.env.SERVER_BASE_URL || "http://localhost:3000/",
     },
   },
   app: {

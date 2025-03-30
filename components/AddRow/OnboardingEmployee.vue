@@ -151,6 +151,7 @@ async function handleOnEmSubmit() {
         </td>
         <td class="">
           <Select
+            v-if="departmentNames.length > 0"
             :type="'Department'"
             :options="departmentNames"
             v-model="onEmRow.departmentId"
