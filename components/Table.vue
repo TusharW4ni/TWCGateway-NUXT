@@ -25,6 +25,7 @@ const emits = defineEmits<{
   (event: "nextPage"): void;
   (event: "searchString", value: string): void;
   (event: "deleteRow", value: object): void;
+  (event: "refresh"): void;
 }>();
 
 const searchQuery = ref("");
@@ -261,6 +262,12 @@ async function handleNavigateTo(row: any) {
               v-if="addingRow"
               :type="props.type"
               @cancelAddRow="
+                addingRow = false;
+                disablePagination = false;
+                disableSearch = false;
+              "
+              @refresh="
+                emits('refresh');
                 addingRow = false;
                 disablePagination = false;
                 disableSearch = false;

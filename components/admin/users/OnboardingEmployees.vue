@@ -34,6 +34,10 @@ function handleSearchString(searchString: string) {
 function handleDeleteOnEm(row: any) {
   console.log("HELLO)");
 }
+
+function handleRefresh() {
+  data.refresh();
+}
 </script>
 
 <template>
@@ -49,6 +53,7 @@ function handleDeleteOnEm(row: any) {
       @prevPage="handlePrevPage"
       @nextPage="handleNextPage"
       @searchString="handleSearchString"
+      @refresh="handleRefresh"
     />
   </Details>
 </template>

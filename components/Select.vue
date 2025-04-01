@@ -9,12 +9,11 @@ import {
 
 const props = defineProps<{
   type: string;
-  options: [
-    {
-      id: number;
-      title: string;
-    }
-  ];
+  options: Array<{
+    id: number;
+    title: string;
+  }>;
+  modelValue: string;
 }>();
 
 const emits = defineEmits<{
@@ -63,10 +62,11 @@ function updateSelected(newValue: string) {
 </script>
 
 <template>
+  <!-- max-w-[200px] old button -->
   <div>
     <button
       @click="buttonClicked = true"
-      class="flex items-center max-w-[200px] border-2 border-gray-300 focus:outline-none rounded px-2 focus:border-twc-yellow hover:border-twc-blue bg-gray-100 focus:bg-white"
+      class="flex items-center w-full border-2 border-gray-300 focus:outline-none rounded px-2 focus:border-twc-yellow hover:border-twc-blue bg-gray-100 focus:bg-white"
     >
       <span class="truncate overflow-hidden whitespace-nowrap flex-1">
         {{ selected }}

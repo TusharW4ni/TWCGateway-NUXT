@@ -1,120 +1,74 @@
 <script setup lang="ts">
 import { XMarkIcon, CheckIcon } from "@heroicons/vue/24/solid";
 import type { Department } from "@prisma/client";
+import { validateNewOnEm } from "./validator.ts";
 
 const { notify } = useToast();
 
 const emits = defineEmits<{
   (event: "cancelAddRow"): void;
   (event: "submitAddRow", value: object): void;
+  (event: "refresh"): void;
 }>();
 
-const onEmRow = ref({
+const row = ref({
   firstName: "",
   lastName: "",
   email: "",
   departmentId: "",
 });
 
-const departments = ref<Department[]>([]); // Initialize as an empty array
 const departmentNames = ref<{ id: string; title: string }[]>([]);
-
-// Asynchronous function to fetch departments
-async function fetchDepartments() {
-  try {
-    const response = await $fetch<{ res: Department[] }>(
-      "/api/departments/get",
-      {
-        method: "GET",
-      }
-    );
-    departments.value = response.res;
-    departmentNames.value = departments.value.map((dep) => ({
+const departments = await useFetch("/api/departments/get", {
+  method: "GET",
+  onRequestError({ error }) {
+    console.log({ error });
+    notify("Error: Cannot fetch departments", "error");
+  },
+  onResponse({ response }) {
+    console.log({ response });
+    departmentNames.value = response._data.res.map((dep: Department) => ({
       id: dep.id,
       title: dep.name,
     }));
-    console.log({ departments: departments.value });
-  } catch (e) {
-    console.log({ error: e });
+  },
+  onResponseError({ error }) {
+    console.log({ error });
     notify("Error: Cannot fetch departments", "error");
-  }
-}
-
-// Call fetchDepartments after the component is mounted
-onMounted(fetchDepartments);
-
-// const departmentNames = departments.res.map((dep) => ({
-//   id: dep.id,
-//   title: dep.name,
-// }));
-
-async function validateOnEm(row: any) {
-  const emailRegex = /^.+@.+$/;
-  if (row.firstName === "") {
-    notify(
-      "Error: Cannot add onboarding employee because of empty first name",
-      "error"
-    );
-    return false;
-  }
-  if (row.lastName === "") {
-    notify(
-      "Error: Cannot add onboarding employee because of empty last name",
-      "error"
-    );
-    return false;
-  }
-  if (row.email === "") {
-    notify(
-      "Error: Cannot add onboarding employee because of empty email",
-      "error"
-    );
-    return false;
-  }
-  if (emailRegex.test(row.email)) {
-    try {
-      const user = await $fetch(`/api/users/get/${row.email}`);
-      console.log({ user });
-      if (Object.keys(user.user.res).length === 0) {
-        console.log({ error: "inside of user.res.length" });
-        notify("Error: User with this email already exists", "error");
-        return false;
-      }
-    } catch (e) {
-      notify("Error: Cannot fetch user based on email", "error");
-      return false;
-    }
-  } else {
-    notify("Error: Email not in correct structure", "error");
-    return false;
-  }
-  return true;
-}
+  },
+});
 
 async function handleOnEmSubmit() {
   const trimmedRow = {
-    firstName: onEmRow.value.firstName.trim(),
-    lastName: onEmRow.value.lastName.trim(),
-    email: onEmRow.value.email.trim(),
-    departmentId: onEmRow.value.departmentId.trim(),
+    firstName: row.value.firstName.trim(),
+    lastName: row.value.lastName.trim(),
+    email: row.value.email.trim(),
+    departmentId: row.value.departmentId.trim(),
   };
-  if (await validateOnEm(trimmedRow)) {
-    try {
-      const res = await $fetch("/api/users/post/onEm", {
-        method: "POST",
-        body: {
-          firstName: trimmedRow.firstName,
-          lastName: trimmedRow.lastName,
-          email: trimmedRow.email,
-          departmentId: trimmedRow.departmentId,
-        },
-      });
-      console.log({ res });
-      // notify(`${res.then.}`)
-    } catch (e) {
-      console.log({ e });
-      notify("Error: Cannot add onboarding employee, server error", "error");
-    }
+
+  const errors = await validateNewOnEm(trimmedRow);
+  console.log({ errors });
+  if (errors.length > 0) {
+    errors.forEach((error) => notify(error, "error"));
+    return;
+  }
+
+  try {
+    const res = await $fetch("/api/users/post/on-em", {
+      method: "POST",
+      body: {
+        firstName: trimmedRow.firstName,
+        lastName: trimmedRow.lastName,
+        email: trimmedRow.email,
+        departmentId: trimmedRow.departmentId,
+      },
+    });
+    console.log({ res });
+    notify(`Onboarding employee ${trimmedRow.firstName} added`, "success");
+    emits("refresh");
+  } catch (e) {
+    console.log({ e });
+    notify("Error: Cannot add onboarding employee, server error", "error");
   }
 }
 </script>
@@ -122,9 +76,8 @@ async function handleOnEmSubmit() {
 <template>
   <table class="w-full">
     <tbody>
-      <!-- <tr v-if="props.type === 'Onboarding Employee'" class=""> -->
       <tr class="">
-        <td class="">
+        <td class="flex justify-center items-center">
           <button
             class="p-1 m-1 rounded-md bg-gray-200 hover:bg-gray-300"
             @click.stop="emits('cancelAddRow')"
@@ -132,35 +85,35 @@ async function handleOnEmSubmit() {
             <XMarkIcon class="w-6" />
           </button>
         </td>
-        <td class="">
+        <td class="md:px-2 text-center">
           <Input
-            :class="''"
+            :class="'w-full'"
             :placeholder="'First Name'"
-            v-model="onEmRow.firstName"
+            v-model="row.firstName"
           />
         </td>
-        <td class="">
+        <td class="md:px-2 text-center">
           <Input
-            :class="''"
+            :class="'w-full'"
             :placeholder="'Last Name'"
-            v-model="onEmRow.lastName"
+            v-model="row.lastName"
           />
         </td>
-        <td class="">
-          <Input :placeholder="'Email'" v-model="onEmRow.email" />
+        <td class="md:px-2 text-center">
+          <Input :class="'w-full'" :placeholder="'Email'" v-model="row.email" />
         </td>
-        <td class="">
+        <td class="md:px-2 text-center">
           <Select
             v-if="departmentNames.length > 0"
             :type="'Department'"
             :options="departmentNames"
-            v-model="onEmRow.departmentId"
+            v-model="row.departmentId"
           />
         </td>
-        <td class="">
+        <td class="flex justify-center items-center">
           <button
             @click.stop="handleOnEmSubmit"
-            class="p-1 m-1 rounded-md bg-gray-200 hover:bg-gray-300"
+            class="p-1 m-1 rounded-md bg-gray-200 hover:bg-green-300 hover:text-green-700"
           >
             <CheckIcon class="w-6" />
           </button>

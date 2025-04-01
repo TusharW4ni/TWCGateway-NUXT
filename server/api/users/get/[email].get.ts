@@ -1,8 +1,8 @@
 export default defineEventHandler(async (event) => {
   const email = getRouterParam(event, "email");
-
+  console.log({ email });
   try {
-    const res = event.context.prisma.user.findUnique({
+    const res = await event.context.prisma.user.findUnique({
       where: {
         archived: false,
         email,
