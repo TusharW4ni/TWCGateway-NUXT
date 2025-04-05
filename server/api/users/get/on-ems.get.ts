@@ -7,7 +7,6 @@ export default defineEventHandler(async (event) => {
     const skip = (page - 1) * pageSize;
 
     const lowerSearchString = searchString.toLowerCase();
-    console.log("lowerSearchString", lowerSearchString);
 
     const searchCondition = searchString
       ? {
@@ -73,7 +72,7 @@ export default defineEventHandler(async (event) => {
 
     setResponseStatus(event, 200);
     return {
-      employees: transformedEmployees,
+      onEms: transformedEmployees,
       total,
       page,
       pageSize,
