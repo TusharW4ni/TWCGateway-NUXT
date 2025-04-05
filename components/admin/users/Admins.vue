@@ -5,7 +5,7 @@ const pageSize = ref(3);
 const search = ref("");
 const dataLoading = ref(false);
 
-const data = await useFetch("/api/users/get/allSupervisors", {
+const data = await useFetch("/api/users/get/admins", {
   query: {
     page,
     pageSize,
@@ -39,9 +39,9 @@ function handleDelete(row: any) {
 <template>
   <Details :summary="'Admins'" class="md:w-3/4">
     <Table
-      :type="'Onboarding Employee'"
+      :type="'Admin'"
       :headers="headers"
-      :data="data.data.value.supervisors"
+      :data="data.data.value.admins"
       :loading="dataLoading"
       :currentPage="page"
       :totalPages="data.data.value.totalPages"
