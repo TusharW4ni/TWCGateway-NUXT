@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import OnboardingEmployee from "~/components/AddRow/OnboardingEmployee.vue";
+import Supervisor from "~/components/AddRow/Supervisor.vue";
 import Admin from "~/components/AddRow/Admin.vue";
 
 const props = defineProps<{
@@ -27,6 +28,11 @@ function handleRefresh() {
 <template>
   <OnboardingEmployee
     v-if="props.type === 'Onboarding Employee'"
+    @cancelAddRow="handleCancelAddRow"
+    @refresh="handleRefresh"
+  />
+  <Supervisor
+    v-if="props.type === 'Supervisor'"
     @cancelAddRow="handleCancelAddRow"
     @refresh="handleRefresh"
   />

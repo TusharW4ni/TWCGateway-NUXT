@@ -42,6 +42,23 @@ export async function validateNewOnEm(rowData: newOnEmRowData) {
   return errors;
 }
 
+export async function validateNewSupervisor(rowData: newAdminRowData) {
+  const { firstName, lastName, email } = rowData;
+  const errors = [];
+
+  if (!firstName) {
+    errors.push("First name is required");
+  }
+  if (!lastName) {
+    errors.push("Last name is required");
+  }
+  if (!email) {
+    errors.push("Email is required");
+  }
+
+  return errors;
+}
+
 export async function validateNewAdmin(rowData: newAdminRowData) {
   const { firstName, lastName, email } = rowData;
   const errors = [];

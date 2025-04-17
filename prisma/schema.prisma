@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "./generated"
 }
 
 datasource db {
@@ -58,7 +59,7 @@ model Task {
   description                String
   Department                 Department                @relation(fields: [departmentId], references: [id])
   departmentId               Int
-  OnTaskAssignment           OnEmTaskAssignment[]
+  OnEmTaskAssignment         OnEmTaskAssignment[]
   SupervisorTaskAssignment   SupervisorTaskAssignment? @relation(fields: [supervisorTaskAssignmentId], references: [id])
   supervisorTaskAssignmentId Int?
   archived                   Boolean                   @default(false)

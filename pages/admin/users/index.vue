@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import OnboardingEmployees from "~/components/admin/users/OnboardingEmployees.vue";
-import Supervisors from "~/components/admin/users/Supervisors.vue";
-import Admins from "~/components/admin/users/Admins.vue";
+import OnboardingEmployees from "~/components/pages/admin/users/OnboardingEmployees.vue";
+import Supervisors from "~/components/pages/admin/users/Supervisors.vue";
+import Admins from "~/components/pages/admin/users/Admins.vue";
 
 definePageMeta({
   name: "admin | users",
