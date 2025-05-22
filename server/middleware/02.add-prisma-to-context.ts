@@ -1,5 +1,5 @@
-import prisma from "../../lib/prisma";
+// import prisma from "../../lib/prisma";
 
 export default defineEventHandler(async (event) => {
-  event.context.prisma = prisma;
+  // event.context.prisma = prisma;
 });

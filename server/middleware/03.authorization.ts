@@ -12,20 +12,20 @@ export default defineEventHandler(async (event) => {
   }
   try {
     const { email } = claims;
-    const user = await event.context.prisma.user.findUnique({
-      where: {
-        email,
-        archived: false,
-      },
-    });
-    setCookie(event, "currentUser", JSON.stringify(user), {
-      maxAge: 60 * 60 * 24 * 5,
-    });
-    if (!user) {
-      sendRedirect(event, logoutRedirectUrl(token));
-    } else {
-      event.context.user = user;
-    }
+    // const user = await event.context.prisma.user.findUnique({
+    //   where: {
+    //     email,
+    //     archived: false,
+    //   },
+    // });
+    // setCookie(event, "currentUser", JSON.stringify(user), {
+    //   maxAge: 60 * 60 * 24 * 5,
+    // });
+    // if (!user) {
+    //   sendRedirect(event, logoutRedirectUrl(token));
+    // } else {
+    //   event.context.user = user;
+    // }
   } catch (e) {
     console.error("Error in authorization middleware: \n", e);
   }
